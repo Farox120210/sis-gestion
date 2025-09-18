@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class ArchivoPublicacionController extends Controller
 {
@@ -22,16 +23,17 @@ class ArchivoPublicacionController extends Controller
         abort_unless($pub, 404);
 
         $disk = 'public';
+        $directory = "publicaciones/{$idPublicacion}";
         $insertados = [];
+
+        Storage::disk($disk)->makeDirectory($directory);
 
         foreach ($request->file('archivos', []) as $file) {
             $maxVersion = DB::table('proyecto_revista_archivos')
                 ->where('ID_PROYECTO_REVISTA', $idPublicacion)->max('VERSION');
             $nextVersion = (int) $maxVersion + 1;
 
-            $storedPath = $file->store("publicaciones/$idPublicacion", ['disk' => $disk]);
-            $publicUrl  = Storage::disk($disk)->url($storedPath);
-            $hash       = hash_file('sha256', Storage::disk($disk)->path($storedPath));
+
 
             $idArchivo = DB::table('proyecto_revista_archivos')->insertGetId([
                 'ID_PROYECTO_REVISTA' => $idPublicacion,
@@ -88,8 +90,7 @@ class ArchivoPublicacionController extends Controller
             ->first();
         abort_unless($archivo, 404);
 
-        if ($archivo->DISK && $archivo->PATH) {
-            Storage::disk($archivo->DISK)->delete($archivo->PATH);
+
         }
 
         $pub = DB::table('proyecto_revista')->where('ID_PROYECTO_REVISTA', $idPublicacion)->first();
