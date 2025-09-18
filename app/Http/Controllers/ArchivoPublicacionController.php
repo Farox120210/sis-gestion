@@ -29,16 +29,16 @@ class ArchivoPublicacionController extends Controller
                 ->where('ID_PROYECTO_REVISTA', $idPublicacion)->max('VERSION');
             $nextVersion = (int) $maxVersion + 1;
 
-            $stored = $file->store("public/publicaciones/$idPublicacion");
-            $path   = Storage::url($stored);
-            $hash   = hash_file('sha256', $file->getRealPath());
+            $storedPath = $file->store("publicaciones/$idPublicacion", ['disk' => $disk]);
+            $publicUrl  = Storage::disk($disk)->url($storedPath);
+            $hash       = hash_file('sha256', Storage::disk($disk)->path($storedPath));
 
             $idArchivo = DB::table('proyecto_revista_archivos')->insertGetId([
                 'ID_PROYECTO_REVISTA' => $idPublicacion,
                 'NOMBRE_ORIGINAL'     => $file->getClientOriginalName(),
                 'DISK'                => $disk,
-                'PATH'                => $path,
-                'URL'                 => null,
+                'PATH'                => $storedPath,
+                'URL'                 => $publicUrl,
                 'MIME_TYPE'           => $file->getMimeType(),
                 'SIZE_BYTES'          => $file->getSize(),
                 'HASH_SHA256'         => $hash,
@@ -88,9 +88,8 @@ class ArchivoPublicacionController extends Controller
             ->first();
         abort_unless($archivo, 404);
 
-        if ($archivo->DISK === 'public' && $archivo->PATH) {
-            $storagePath = str_replace('/storage/', 'public/', $archivo->PATH);
-            Storage::delete($storagePath);
+        if ($archivo->DISK && $archivo->PATH) {
+            Storage::disk($archivo->DISK)->delete($archivo->PATH);
         }
 
         $pub = DB::table('proyecto_revista')->where('ID_PROYECTO_REVISTA', $idPublicacion)->first();
