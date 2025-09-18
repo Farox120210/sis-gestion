@@ -33,16 +33,7 @@ class ArchivoPublicacionController extends Controller
                 ->where('ID_PROYECTO_REVISTA', $idPublicacion)->max('VERSION');
             $nextVersion = (int) $maxVersion + 1;
 
-            $fileName = $file->hashName();
-            $storedPath = Storage::disk($disk)->putFileAs($directory, $file, $fileName);
 
-            if (empty($storedPath)) {
-                throw new \RuntimeException('No se pudo almacenar el archivo en el disco configurado.');
-            }
-
-            $publicUrl = Storage::disk($disk)->url($storedPath);
-            $absolutePath = Storage::disk($disk)->path($storedPath);
-            $hash = hash_file('sha256', $absolutePath);
 
             $idArchivo = DB::table('proyecto_revista_archivos')->insertGetId([
                 'ID_PROYECTO_REVISTA' => $idPublicacion,
@@ -99,39 +90,7 @@ class ArchivoPublicacionController extends Controller
             ->first();
         abort_unless($archivo, 404);
 
-        if ($archivo->PATH) {
-            $disk = $archivo->DISK ?: config('filesystems.default');
-            $rawPath = $archivo->PATH;
 
-            if (!Str::startsWith($rawPath, ['http://', 'https://'])) {
-                $normalizedBase = ltrim($rawPath, '/');
-                $candidates = [$normalizedBase];
-
-                if (Str::contains($normalizedBase, '/storage/')) {
-                    $candidates[] = ltrim(Str::after($normalizedBase, '/storage/'), '/');
-                }
-
-                if (Str::startsWith($normalizedBase, 'storage/')) {
-                    $candidates[] = Str::after($normalizedBase, 'storage/');
-                }
-
-                if (Str::contains($normalizedBase, '/public/')) {
-                    $candidates[] = ltrim(Str::after($normalizedBase, '/public/'), '/');
-                }
-
-                if (Str::startsWith($normalizedBase, 'public/')) {
-                    $candidates[] = Str::after($normalizedBase, 'public/');
-                }
-
-                foreach ($candidates as $candidate) {
-                    $cleanCandidate = preg_replace('#^(storage/|public/)+#', '', $candidate);
-                    $pathToDelete = $cleanCandidate ?: $candidate;
-
-                    if ($pathToDelete && Storage::disk($disk)->exists($pathToDelete)) {
-                        Storage::disk($disk)->delete($pathToDelete);
-                    }
-                }
-            }
         }
 
         $pub = DB::table('proyecto_revista')->where('ID_PROYECTO_REVISTA', $idPublicacion)->first();
