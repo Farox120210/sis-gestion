@@ -103,7 +103,25 @@
                     </h3>
                     @if ($archivoPrincipal)
                         @php
-                            $pdfLink = $archivoPrincipal->URL ?: $archivoPrincipal->PATH;
+                            $disk = $archivoPrincipal->DISK ?? 'public';
+                            $pdfLink = $archivoPrincipal->URL;
+
+                            if (!$pdfLink && $archivoPrincipal->PATH) {
+                                $candidate = ltrim($archivoPrincipal->PATH, '/');
+
+                                if (\Illuminate\Support\Str::startsWith($candidate, 'storage/')) {
+                                    $pdfLink = '/' . $candidate;
+                                } else {
+                                    if (\Illuminate\Support\Str::startsWith($candidate, 'public/')) {
+                                        $candidate = \Illuminate\Support\Str::after($candidate, 'public/');
+                                    }
+
+                                    if ($candidate) {
+                                        $pdfLink = \Illuminate\Support\Facades\Storage::disk($disk)->url($candidate);
+                                    }
+                                }
+                            }
+
                             $tam = $archivoPrincipal->SIZE_BYTES
                                 ? number_format($archivoPrincipal->SIZE_BYTES / 1024, 1) . ' KB'
                                 : '—';
