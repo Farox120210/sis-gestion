@@ -181,4 +181,6 @@
             </form>
         </div>
     </div>
+
+    @include('admin.publicaciones._archivos', ['pub' => $pub, 'archivos' => $archivos])
 @endsection

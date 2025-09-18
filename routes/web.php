@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ArchivoPublicacionController;
 use App\Http\Controllers\PublicacionController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\InvestigadorController;
@@ -10,10 +11,6 @@ use Illuminate\Support\Facades\Route;
 //Route::get('/', function () {
 //  return view('welcome');
 //});
-
-Auth::routes();
-
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 Auth::routes();
 
@@ -42,17 +39,19 @@ Route::put('/admin/usuarios/{usuario}', [UsuarioController::class, 'update'])->n
 
 //RUTAS EN GENERAL 
 Route::middleware('auth')->prefix('admin')->group(function () {
-    Route::resource('publicaciones', PublicacionController::class)
-        ->names('publicaciones')
-        ->parameters(['publicaciones' => 'id']); // opcional: para que sea /publicaciones/{id}
-
-});
-
-Route::middleware('auth')->prefix('admin')->group(function () {
     // PUBLICACIONES
     Route::resource('publicaciones', PublicacionController::class)
         ->names('publicaciones')
         ->parameters(['publicaciones' => 'id']); // => /admin/publicaciones/{id}
+
+    Route::post('publicaciones/{publicacion}/archivos', [ArchivoPublicacionController::class, 'store'])
+        ->name('publicaciones.archivos.store');
+
+    Route::delete('publicaciones/{publicacion}/archivos/{archivo}', [ArchivoPublicacionController::class, 'destroy'])
+        ->name('publicaciones.archivos.destroy');
+
+    Route::patch('publicaciones/{publicacion}/archivos/{archivo}/principal', [ArchivoPublicacionController::class, 'setPrincipal'])
+        ->name('publicaciones.archivos.principal');
 
     // INVESTIGADORES
     Route::resource('investigadores', InvestigadorController::class)

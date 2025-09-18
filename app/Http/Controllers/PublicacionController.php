@@ -188,87 +188,78 @@ class PublicacionController extends Controller
                 );
             }
 
-           // 5) PDF opcional (single) → tabla hija + marcar principal
-if ($request->hasFile('pdf')) {
-    $file = $request->file('pdf');
+            // 5) PDF opcional (single) → tabla hija + marcar principal
+            if ($request->hasFile('pdf')) {
+                $file = $request->file('pdf');
 
-    // 5.1 Verifica error de subida de PHP antes de procesar
-    if ($file->getError() !== UPLOAD_ERR_OK) {
-        $msg = $file->getErrorMessage(); // método de instancia, sin args
-        Log::error('Fallo de subida (PHP)', ['php_error' => $file->getError(), 'msg' => $msg]);
-        return back()->withInput()->withErrors(['pdf' => 'No se pudo subir el PDF: ' . $msg]);
-    }
+                // 5.1 Verifica error de subida de PHP antes de procesar
+                if ($file->getError() !== UPLOAD_ERR_OK) {
+                    $msg = $file->getErrorMessage(); // método de instancia, sin args
+                    Log::error('Fallo de subida (PHP)', ['php_error' => $file->getError(), 'msg' => $msg]);
+                    return back()->withInput()->withErrors(['pdf' => 'No se pudo subir el PDF: ' . $msg]);
+                }
 
-    Log::info('PDF detectado', [
-        'original' => $file->getClientOriginalName(),
-        'size'     => $file->getSize(),
-        'mime'     => $file->getMimeType(),
-    ]);
+                Log::info('PDF detectado', [
+                    'original' => $file->getClientOriginalName(),
+                    'size'     => $file->getSize(),
+                    'mime'     => $file->getMimeType(),
+                ]);
 
-    try {
-        // --- CAMBIOS CLAVE A PARTIR DE AQUÍ ---
+                $disk = 'public';
+                $directory = "publicaciones/{$idPublicacion}";
+                $fileName = (string) Str::uuid() . '.pdf';
 
-        // A) Directorio y nombre (no pueden ser vacíos)
-        $dir = "publicaciones/{$idPublicacion}";
-        $fileName = (string) Str::uuid() . '.pdf';
+                try {
+                    // Asegura la carpeta destino
+                    Storage::disk($disk)->makeDirectory($directory);
 
-        // B) Asegura que el directorio existe en el DISCO 'public'
-        Storage::disk('public')->makeDirectory($dir);
+                    // Guarda el archivo en el disco configurado y obtiene la ruta relativa
+                    $storedPath = Storage::disk($disk)->putFileAs($directory, $file, $fileName);
 
-        // C) Guarda en el DISCO 'public' explícitamente
-        //    Devuelve algo como: "publicaciones/{idPublicacion}/{uuid}.pdf"
-        $storedPath = $file->storeAs($dir, $fileName, 'public');
+                    if (empty($storedPath)) {
+                        throw new \RuntimeException('putFileAs devolvió ruta vacía.');
+                    }
 
-        if (empty($storedPath)) {
-            throw new \RuntimeException('storeAs devolvió ruta vacía.');
-        }
+                    $publicUrl = Storage::disk($disk)->url($storedPath);
+                    $absolutePath = Storage::disk($disk)->path($storedPath);
 
-        // D) Genera la URL pública desde el MISMO disco 'public'
-        //    Queda: "/storage/publicaciones/{idPublicacion}/{uuid}.pdf"
-        $publicUrl = Storage::disk('public')->url($storedPath);
+                    Log::debug('STORAGE DEBUG POST', [
+                        'storedPath' => $storedPath,
+                        'exists'     => Storage::disk($disk)->exists($storedPath),
+                        'publicUrl'  => $publicUrl,
+                    ]);
 
-        Log::debug('STORAGE DEBUG POST', [
-            'storedPath' => $storedPath,
-            'exists'     => Storage::disk('public')->exists($storedPath),
-            'publicUrl'  => $publicUrl,
-        ]);
+                    $hash = hash_file('sha256', $absolutePath);
 
-        // E) (opcional) Hash antes de mover ya lo tienes arriba, pero es válido aquí también
-        $hash = hash_file('sha256', $file->getRealPath());
+                    $idArchivo = DB::table('proyecto_revista_archivos')->insertGetId([
+                        'ID_PROYECTO_REVISTA' => $idPublicacion,
+                        'NOMBRE_ORIGINAL'     => $file->getClientOriginalName(),
+                        'DISK'                => $disk,
+                        'PATH'                => $storedPath,
+                        'URL'                 => $publicUrl,
+                        'MIME_TYPE'           => $file->getMimeType(),
+                        'SIZE_BYTES'          => $file->getSize(),
+                        'HASH_SHA256'         => $hash,
+                        'TIPO'                => 'publicado',
+                        'VERSION'             => 1,
+                        'LICENCIA'            => null,
+                    ]);
 
-        // F) Inserta en la tabla hija guardando PATH (interno) y URL (pública)
-        $idArchivo = DB::table('proyecto_revista_archivos')->insertGetId([
-            'ID_PROYECTO_REVISTA' => $idPublicacion,
-            'NOMBRE_ORIGINAL'     => $file->getClientOriginalName(),
-            'DISK'                => 'public',
-            'PATH'                => $storedPath,   // ← path interno ("publicaciones/.../uuid.pdf")
-            'URL'                 => $publicUrl,    // ← url pública ("/storage/.../uuid.pdf")
-            'MIME_TYPE'           => $file->getMimeType(),
-            'SIZE_BYTES'          => $file->getSize(),
-            'HASH_SHA256'         => $hash,
-            'TIPO'                => 'publicado',
-            'VERSION'             => 1,
-            'LICENCIA'            => null,
-        ]);
+                    DB::table('proyecto_revista')
+                        ->where('ID_PROYECTO_REVISTA', $idPublicacion)
+                        ->update(['ID_ARCHIVO_PRINCIPAL' => $idArchivo]);
+                } catch (\Throwable $ex) {
+                    Log::error('Error subiendo/registrando PDF', [
+                        'msg'  => $ex->getMessage(),
+                        'line' => $ex->getLine(),
+                        'file' => $ex->getFile(),
+                    ]);
 
-        // G) Marca como principal
-        DB::table('proyecto_revista')
-            ->where('ID_PROYECTO_REVISTA', $idPublicacion)
-            ->update(['ID_ARCHIVO_PRINCIPAL' => $idArchivo]);
-
-        // --- FIN CAMBIOS CLAVE ---
-
-    } catch (\Throwable $ex) {
-        Log::error('Error subiendo/registrando PDF', [
-            'msg'  => $ex->getMessage(),
-            'line' => $ex->getLine(),
-            'file' => $ex->getFile()
-        ]);
-        throw $ex; // rollback por transacción
-    }
-} else {
-    Log::warning('hasFile("pdf") == false');
-}
+                    throw $ex; // rollback por transacción
+                }
+            } else {
+                Log::warning('hasFile("pdf") == false');
+            }
 
             DB::commit();
 
@@ -349,6 +340,7 @@ if ($request->hasFile('pdf')) {
                 ->select([
                     'ID_ARCHIVO',
                     'NOMBRE_ORIGINAL',
+                    'DISK',
                     'URL',
                     'PATH',
                     'MIME_TYPE',
@@ -387,6 +379,7 @@ if ($request->hasFile('pdf')) {
             ->where('pr.ID_PROYECTO_REVISTA', $id)
             ->select([
                 'pr.ID_PROYECTO_REVISTA as id_publicacion',
+                'pr.ID_ARCHIVO_PRINCIPAL as id_archivo_principal',
                 'pr.ID_REVISTA as id_revista',
                 'pr.ANIO_PUBLICACION as anio_publicacion',
 
@@ -439,6 +432,11 @@ if ($request->hasFile('pdf')) {
             ->pluck('ID_INVESTIGADOR')
             ->toArray();
 
+        $archivos = DB::table('proyecto_revista_archivos')
+            ->where('ID_PROYECTO_REVISTA', $id)
+            ->orderByDesc('FECHA_SUBIDA')
+            ->get();
+
         // 4) Return (mejor pasar arreglo explícito para evitar typos)
         return view('admin.publicaciones.edit', [
             'pub'            => $pub,
@@ -448,6 +446,7 @@ if ($request->hasFile('pdf')) {
             'grupos'         => $grupos,
             'investigadores' => $investigadores,
             'coautorIds'     => $coautorIds,
+            'archivos'       => $archivos,
         ]);
     }
 

@@ -1,10 +1,12 @@
-@extends('layouts.admin')
-@section('content')
-    <div class="card card-outline card-secondary mt-3">
+<div class="card card-outline card-secondary mt-3">
   <div class="card-header d-flex justify-content-between align-items-center">
     <h3 class="card-title mb-0">Archivos / versiones</h3>
     <small class="text-muted">Sube uno o varios PDFs y marca uno como principal.</small>
   </div>
+
+  @php
+      $archivos = collect($archivos ?? []);
+  @endphp
 
   <div class="card-body">
     <form action="{{ route('publicaciones.archivos.store', $pub->id_publicacion) }}"
@@ -63,9 +65,34 @@
             <td>{{ $a->NOMBRE_ORIGINAL ?? '—' }}</td>
             <td><span class="badge badge-info">{{ $a->TIPO ?? '—' }}</span></td>
             <td>{{ number_format(($a->SIZE_BYTES ?? 0)/1024, 1) }} KB</td>
-            <td>{{ \Carbon\Carbon::parse($a->FECHA_SUBIDA)->format('d/m/Y H:i') }}</td>
             <td>
-              @php $url = $a->URL ?: $a->PATH; @endphp
+              @if($a->FECHA_SUBIDA)
+                {{ \Carbon\Carbon::parse($a->FECHA_SUBIDA)->format('d/m/Y H:i') }}
+              @else
+                —
+              @endif
+            </td>
+            <td>
+              @php
+                  $disk = $a->DISK ?? 'public';
+                  $url = $a->URL;
+
+                  if (!$url && $a->PATH) {
+                      $candidate = ltrim($a->PATH, '/');
+
+                      if (\Illuminate\Support\Str::startsWith($candidate, 'storage/')) {
+                          $url = '/' . $candidate;
+                      } else {
+                          if (\Illuminate\Support\Str::startsWith($candidate, 'public/')) {
+                              $candidate = \Illuminate\Support\Str::after($candidate, 'public/');
+                          }
+
+                          if ($candidate) {
+                              $url = \Illuminate\Support\Facades\Storage::disk($disk)->url($candidate);
+                          }
+                      }
+                  }
+              @endphp
               @if($url)
                 <a href="{{ $url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
                   <i class="bi bi-file-earmark-pdf"></i> Ver
@@ -92,5 +119,3 @@
     </div>
   </div>
 </div>
-@include('admin.publicaciones._archivos')
-@endsection
