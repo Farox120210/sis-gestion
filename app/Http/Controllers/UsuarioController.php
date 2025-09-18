@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class UsuarioController extends Controller
@@ -51,25 +52,39 @@ class UsuarioController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show($id)
     {
-        //
+     $usuario = User::findOrFail    ($id);
+     return view('admin.usuarios.show',['usuario'=>$usuario] );
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit($id)
+
     {
-        //
+        $usuario= User::FindOrFail($id);
+        return view('admin.usuarios.edit',['usuario'=>$usuario] );
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
-        //
+        $request->validate([
+            'name' => 'required|max:100',
+            'email' => 'required|unique:users',
+            'password'=>'confirmed',
+        ]);
+        $usuario = User::find($id);
+        $usuario->name = $request->name;
+        $usuario->email =$request->email;
+        $usuario->password=Hash::make(($request['password']));
+        $usuario->save();
+        
+        return redirect()->route('usuarios.index');
     }
 
     /**

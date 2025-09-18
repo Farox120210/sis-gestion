@@ -166,12 +166,13 @@ scratch. This page gets rid of all links and provides the needed markup only.
         <!-- Main Sidebar Container -->
         <aside class="main-sidebar sidebar-dark-primary elevation-4">
             <!-- Brand Logo -->
-            <a href="{{ url('/') }}" class="brand-link">
-                <img src="{{asset('dist/img/AdminLTELogo.png')}}" alt="AdminLTE Logo" class="brand-image img-circle elevation-3"
-                    style="opacity: .8">
+            <div>
+                <a href="{{ url('/') }}" class="brand-link">
+                <img src="{{asset('dist/img/ESAT_LogoIdentidad_Sf_Blanco.png')}}" alt="AdminLTE Logo" class="brand-image "
+                        >
                 <span class="brand-text font-weight-light">ESAT</span>
             </a>
-
+        </div>
             <!-- Sidebar -->
             <div class="sidebar">
                 <!-- Sidebar user panel (optional) -->
@@ -208,7 +209,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                             <a href="#" class="nav-link active">
                                 <i class="bi bi-people-fill"></i>
                                 <p>
-                                    Investigadores
+                                    Módulos
                                     <i class="right fas fa-angle-left"></i>
                                 </p>
                             </a>
@@ -216,25 +217,31 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                 <li class="nav-item">
                                     <a href="{{url('/admin/usuarios')}}" class="nav-link active">
                                         <i class="far fa-circle nav-icon"></i>
-                                        <p>Listado de Investigadores</p>
+                                        <p>Usuarios</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{url('/admin/publicaciones')}}" class="nav-link active">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Publicaciones</p>
                                     </a>
                                 </li>
                                 <li class="nav-item">
                                     <a href="{{url('usuarios')}}" class="nav-link active">
                                         <i class="far fa-circle nav-icon"></i>
-                                        <p>Actividades designadas</p>
+                                        <p>Grupos de investigación</p>
                                     </a>
                                 </li>
                                 <li class="nav-item">
                                     <a href="{{url('usuarios')}}" class="nav-link active">
                                         <i class="far fa-circle nav-icon"></i>
-                                        <p>Estado Actividades</p>
+                                        <p>Areas de investigación</p>
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a href="{{url('usuarios')}}" class="nav-link active">
+                                    <a href="{{url('/admin/investigadores')}}" class="nav-link active">
                                         <i class="far fa-circle nav-icon"></i>
-                                        <p>Reportes</p>
+                                        <p>Lista de investigadores</p>
                                     </a>
                                 </li>
                                 

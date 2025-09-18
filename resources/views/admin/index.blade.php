@@ -1,9 +1,9 @@
-@extends('layouts.admin')
-@section('content')
-    <div class="row">
-        <div class="h1">Administrador
+    @extends('layouts.admin')
+    @section('content')
+        <div class="row">
+            <div class="h1">Administrador
+            </div>
         </div>
-    </div>
-   
-@endsection
+    
+    @endsection
 
