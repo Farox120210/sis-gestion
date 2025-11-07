@@ -4,6 +4,12 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\PublicacionController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\InvestigadorController;
+use App\Http\Controllers\Admin\PublicacionDashboardController;
+use App\Http\Controllers\ProjectController; // <-- agregado
+use App\Http\Controllers\ExtractArticleController;
+
+
+
 
 use Illuminate\Support\Facades\Route;
 
@@ -53,9 +59,38 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     Route::resource('publicaciones', PublicacionController::class)
         ->names('publicaciones')
         ->parameters(['publicaciones' => 'id']); // => /admin/publicaciones/{id}
+    Route::get('/api/investigadores/search', [PublicacionController::class, 'searchInvestigadores'])
+        ->name('api.investigadores.search');
+
+    // routes/web.php
+    Route::get('/publicaciones/{id}/file/{file}', [PublicacionController::class, 'verArchivo'])
+        ->where('file', '.*')->name('publicaciones.ver-archivo');
+
+    Route::get('/publicaciones/{id}/download/{file}', [PublicacionController::class, 'descargarArchivo'])
+        ->where('file', '.*')->name('publicaciones.descargar-archivo');
 
     // INVESTIGADORES
     Route::resource('investigadores', InvestigadorController::class)
         ->names('investigadores')
         ->parameters(['investigadores' => 'id']); // => /admin/investigadores/{id}
+
+    Route::get('investigadores/export/general', [InvestigadorController::class, 'exportGeneral'])
+        ->name('investigadores.export.general');
+
+    Route::get('investigadores/export/filtrado', [InvestigadorController::class, 'exportFiltrado'])
+        ->name('investigadores.export.filtrado');
+
+    //CONTROLADOR REPORTES GRAFICOS 
+
+    Route::get('admin/publicaciones', [PublicacionDashboardController::class, 'index'])
+        ->name('admin.publicaciones.index');
+
+        Route::post('/extract-article', [App\Http\Controllers\ExtractArticleController::class, 'extract'])
+    ->name('extract.article');
+
+
+Route::post('/extract-article', [ExtractArticleController::class, 'extract'])
+    ->name('extract.article')
+    ->middleware('auth'); 
+
 });

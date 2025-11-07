@@ -86,7 +86,18 @@
                                     @endforeach
                                 </select>
                             </div>
-
+                            <div class="col-md-4 mb-3">
+                                <label for="ID_TIPO" class="form-label">Tipo de proyecto</label>
+                                <select name="ID_TIPO" id="ID_TIPO" class="form-select">
+                                    <option value="">-- Selecciona --</option>
+                                    @foreach ($tipos as $t)
+                                        <option value="{{ $t->ID_TIPO }}"
+                                            {{ old('ID_TIPO', $proyecto->ID_TIPO ?? '') == $t->ID_TIPO ? 'selected' : '' }}>
+                                            {{ $t->NOMBRE_TIPO }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Estado del proyecto *</label>
                                 <select name="id_estado" class="form-control" required>
