@@ -8,7 +8,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dashboard-ESATr</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <title>Dashboard-ESAT_MASTER</title>
 
     <!-- Google Font: Source Sans Pro -->
     <link rel="stylesheet"
@@ -34,7 +36,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                             class="fas fa-bars"></i></a>
                 </li>
                 <li class="nav-item d-none d-sm-inline-block">
-                    <a href="{{url('/')}}" class="nav-link">Sistema de gestión-ESAT</a>
+                    <a href="{{ url('/') }}" class="nav-link">Sistema de gestión-ESAT</a>
                 </li>
 
             </ul>
@@ -42,7 +44,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
             <!-- Right navbar links -->
             <ul class="navbar-nav ml-auto">
                 <!-- Navbar Search -->
-                <li class="nav-item">
+                <!--<li class="nav-item">
                     <a class="nav-link" data-widget="navbar-search" href="#" role="button">
                         <i class="fas fa-search"></i>
                     </a>
@@ -62,7 +64,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                             </div>
                         </form>
                     </div>
-                </li>
+                </li>-->
 
                 {{-- <!-- Messages Dropdown Menu --> --}}
                 {{-- <li class="nav-item dropdown">
@@ -122,7 +124,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
           <a href="#" class="dropdown-item dropdown-footer">See All Messages</a>
         </div>
       </li>--> --}}
-                <!-- Notifications Dropdown Menu -->
+                <!-- Notifications Dropdown Menu
                 <li class="nav-item dropdown">
                     <a class="nav-link" data-toggle="dropdown" href="#">
                         <i class="far fa-bell"></i>
@@ -148,17 +150,17 @@ scratch. This page gets rid of all links and provides the needed markup only.
                         <div class="dropdown-divider"></div>
                         <a href="#" class="dropdown-item dropdown-footer">See All Notifications</a>
                     </div>
-                </li>
+                </li>-->
                 <li class="nav-item">
                     <a class="nav-link" data-widget="fullscreen" href="#" role="button">
                         <i class="fas fa-expand-arrows-alt"></i>
                     </a>
                 </li>
-                <li class="nav-item">
+                <!--<li class="nav-item">
                     <a class="nav-link" data-widget="control-sidebar" data-slide="true" href="#" role="button">
                         <i class="fas fa-th-large"></i>
                     </a>
-                </li>
+                </li>-->
             </ul>
         </nav>
         <!-- /.navbar -->
@@ -167,18 +169,17 @@ scratch. This page gets rid of all links and provides the needed markup only.
         <aside class="main-sidebar sidebar-dark-primary elevation-4">
             <!-- Brand Logo -->
             <div>
-                <a href="{{ url('/') }}" class="brand-link">
-                <img src="{{asset('dist/img/ESAT_LogoIdentidad_Sf_Blanco.png')}}" alt="AdminLTE Logo" class="brand-image "
-                        >
-                <span class="brand-text font-weight-light">ESAT</span>
-            </a>
-        </div>
+                <a href="{{ url('/') }}" class="brand-link d-flex align-items-center justify-content-center">
+                    <img src="{{ asset('dist/img/ESAT_LogoIdentidad_Sf_Blanco.png') }}" alt="ESAT"
+                        class="brand-image" style="max-height:34px;width:auto;margin:0;object-fit:contain;">
+                </a>
+            </div>
             <!-- Sidebar -->
             <div class="sidebar">
                 <!-- Sidebar user panel (optional) -->
                 <div class="user-panel mt-3 pb-3 mb-3 d-flex">
                     <div class="image">
-                        <img src={{asset('dist/img/user2-160x160.jpg')}} class="img-circle elevation-2" alt="User Image">
+                        <img src={{ asset('dist/img/perfil.png') }} class="img-circle elevation-2" alt="User Image">
                     </div>
                     <div class="info">
                         <a href="#" class="d-block">{{ Auth::user()->name }} </a>
@@ -215,41 +216,40 @@ scratch. This page gets rid of all links and provides the needed markup only.
                             </a>
                             <ul class="nav nav-treeview">
                                 <li class="nav-item">
-                                    <a href="{{url('/admin/usuarios')}}" class="nav-link active">
+                                    <a href="{{ url('/admin/usuarios') }}" class="nav-link active">
                                         <i class="far fa-circle nav-icon"></i>
                                         <p>Usuarios</p>
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a href="{{url('/admin/publicaciones')}}" class="nav-link active">
+                                    <a href="{{ url('/admin/publicaciones') }}" class="nav-link active">
                                         <i class="far fa-circle nav-icon"></i>
                                         <p>Publicaciones</p>
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a href="{{url('usuarios')}}" class="nav-link active">
+                                    <a href="{{ url('/admin/investigadores') }}" class="nav-link active">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Lista de investigadores</p>
+                                    </a>
+                                </li>
+                                <!-- <li class="nav-item">
+                                    <a href="{{ url('usuarios') }}" class="nav-link active">
                                         <i class="far fa-circle nav-icon"></i>
                                         <p>Grupos de investigación</p>
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a href="{{url('usuarios')}}" class="nav-link active">
+                                    <a href="{{ url('usuarios') }}" class="nav-link active">
                                         <i class="far fa-circle nav-icon"></i>
                                         <p>Areas de investigación</p>
                                     </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a href="{{url('/admin/investigadores')}}" class="nav-link active">
-                                        <i class="far fa-circle nav-icon"></i>
-                                        <p>Lista de investigadores</p>
-                                    </a>
-                                </li>
-                                
+                                </li>-->
                             </ul>
-                             
-                                
-                            
-                            
+
+
+
+
                         </li>
 
                         @guest
@@ -336,6 +336,57 @@ scratch. This page gets rid of all links and provides the needed markup only.
     <script src="{{ asset('plugins/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <!-- AdminLTE App -->
     <script src="{{ asset('dist/js/adminlte.min.js') }}"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+
+    {{-- CSS de Select2 --}}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    {{-- JS de Select2 (asume que ya tienes jQuery cargado por tu layout) --}}
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.full.min.js"></script>
+
+    <script>
+        // Asegura que el DOM y jQuery están listos
+        $(function() {
+            // Comprueba que select2 está disponible
+            if (typeof $.fn.select2 !== 'function') {
+                console.error(
+                'Select2 no está cargado. Revisa que jQuery y select2.full.min.js se hayan incluido.');
+                return;
+            }
+
+            $('.js-select2').select2({
+                width: '100%',
+                placeholder: '— Seleccione —',
+                allowClear: true,
+                minimumResultsForSearch: 0, // siempre muestra caja de búsqueda
+                language: {
+                    noResults: () => 'Sin resultados',
+                    searching: () => 'Buscando…',
+                    inputTooShort: () => 'Escribe para filtrar',
+                }
+            });
+        });
+    </script>
+
+    <style>
+        /* Ajustes visuales para que combine con Bootstrap/AdminLTE */
+        .select2-container--default .select2-selection--single {
+            min-height: 38px;
+            border-color: #ced4da;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 38px;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 38px;
+        }
+    </style>
+    @stack('scripts')
+@yield('scripts')
+
 </body>
 
 </html>

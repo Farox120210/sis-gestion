@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Http;
 
 class ArchivoPublicacionController extends Controller
 {
-    public function store(Request $request, int $idPublicacion)
+     public function store(Request $request, int $idPublicacion)
     {
         $data = $request->validate([
             'tipo'         => 'nullable|string|max:30',
@@ -32,6 +32,9 @@ class ArchivoPublicacionController extends Controller
             $stored = $file->store("public/publicaciones/$idPublicacion");
             $path   = Storage::url($stored);
             $hash   = hash_file('sha256', $file->getRealPath());
+            $storedPath = $file->store("publicaciones/$idPublicacion", ['disk' => $disk]);
+            $publicUrl  = Storage::disk($disk)->url($storedPath);
+            $hash       = hash_file('sha256', Storage::disk($disk)->path($storedPath));
 
             $idArchivo = DB::table('proyecto_revista_archivos')->insertGetId([
                 'ID_PROYECTO_REVISTA' => $idPublicacion,
@@ -39,6 +42,8 @@ class ArchivoPublicacionController extends Controller
                 'DISK'                => $disk,
                 'PATH'                => $path,
                 'URL'                 => null,
+                'PATH'                => $storedPath,
+                'URL'                 => $publicUrl,
                 'MIME_TYPE'           => $file->getMimeType(),
                 'SIZE_BYTES'          => $file->getSize(),
                 'HASH_SHA256'         => $hash,
@@ -80,7 +85,7 @@ class ArchivoPublicacionController extends Controller
         return back()->with('ok', 'Archivo(s) subido(s) correctamente.');
     }
 
-    public function destroy(Request $request, int $idPublicacion, int $idArchivo)
+     public function destroy(Request $request, int $idPublicacion, int $idArchivo)
     {
         $archivo = DB::table('proyecto_revista_archivos')
             ->where('ID_ARCHIVO', $idArchivo)
@@ -91,6 +96,8 @@ class ArchivoPublicacionController extends Controller
         if ($archivo->DISK === 'public' && $archivo->PATH) {
             $storagePath = str_replace('/storage/', 'public/', $archivo->PATH);
             Storage::delete($storagePath);
+        if ($archivo->DISK && $archivo->PATH) {
+            Storage::disk($archivo->DISK)->delete($archivo->PATH);
         }
 
         $pub = DB::table('proyecto_revista')->where('ID_PROYECTO_REVISTA', $idPublicacion)->first();
@@ -105,20 +112,7 @@ class ArchivoPublicacionController extends Controller
           ->delete();
 
         return back()->with('ok', 'Archivo eliminado.');
-    }
+    } 
+     }
 
-    public function setPrincipal(Request $request, int $idPublicacion, int $idArchivo)
-    {
-        $exists = DB::table('proyecto_revista_archivos')
-          ->where('ID_ARCHIVO', $idArchivo)
-          ->where('ID_PROYECTO_REVISTA', $idPublicacion)
-          ->exists();
-        abort_unless($exists, 404);
-
-        DB::table('proyecto_revista')
-          ->where('ID_PROYECTO_REVISTA', $idPublicacion)
-          ->update(['ID_ARCHIVO_PRINCIPAL' => $idArchivo]);
-
-        return back()->with('ok', 'Archivo marcado como principal.');
-    }
 }

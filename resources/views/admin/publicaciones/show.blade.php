@@ -42,7 +42,6 @@
                 <div class="card-header">
                     <h3 class="card-title mb-0">Datos del proyecto</h3>
                 </div>
-                {{-- Archivo principal (PDF) --}}
 
                 <div class="card-body">
                     <p class="mb-3">{{ $pub->descripcion ?: '—' }}</p>
@@ -90,30 +89,39 @@
                     </div>
                 </div>
             </div>
-            
         </div>
-        
     </div>
-<div class="row">
+
+    {{-- Archivo principal (PDF) --}}
+    <div class="row">
         <div class="col-12">
             <div class="card card-outline card-danger">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title mb-0">
                         <i class="bi bi-file-earmark-pdf"></i> Archivo principal (PDF)
                     </h3>
+
                     @if ($archivoPrincipal)
                         @php
-                            $pdfLink = $archivoPrincipal->URL ?: $archivoPrincipal->PATH;
+                            // Preferir la URL pública guardada; si no existe, construirla desde PATH en el disco 'public'
+                            $pdfLink =
+                                $archivoPrincipal->URL ?:
+                                ($archivoPrincipal->PATH
+                                    ? \Illuminate\Support\Facades\Storage::disk('public')->url($archivoPrincipal->PATH)
+                                    : null);
+
                             $tam = $archivoPrincipal->SIZE_BYTES
                                 ? number_format($archivoPrincipal->SIZE_BYTES / 1024, 1) . ' KB'
                                 : '—';
+
                             $ver = $archivoPrincipal->VERSION ?? 1;
                         @endphp
-                        <a href="{{ $pdfLink }}" target="_blank" class="btn btn-outline-danger">
-                            <i class="bi bi-file-earmark-pdf"></i> Ver PDF (v{{ $ver }})
-                        </a>
+
+                        @if ($pdfLink)
+                        @endif
                     @endif
                 </div>
+
                 <div class="card-body">
                     @if ($archivoPrincipal)
                         <div class="row">
@@ -132,9 +140,25 @@
                         <span class="text-muted">No hay PDF principal asignado aún.</span>
                     @endif
                 </div>
+                @php
+                    $fileName = $archivoPrincipal?->PATH ? basename($archivoPrincipal->PATH) : null;
+                @endphp
+
+                @if ($fileName)
+                    <a href="{{ route('publicaciones.ver-archivo', ['id' => $pub->id_publicacion, 'file' => $fileName]) }}"
+                        target="_blank" rel="noopener" class="btn btn-outline-danger">
+                        <i class="bi bi-file-earmark-pdf"></i> Ver PDF (v{{ $ver }})
+                    </a>
+
+                    <a href="{{ route('publicaciones.descargar-archivo', ['id' => $pub->id_publicacion, 'file' => $fileName]) }}"
+                        class="btn btn-outline-primary">
+                        <i class="bi bi-download"></i> Descargar
+                    </a>
+                @endif
             </div>
         </div>
     </div>
+
     {{-- Autores --}}
     <div class="row">
         <div class="col-12">
@@ -150,7 +174,7 @@
                             <span class="badge badge-primary">Autor principal</span>
                         </li>
                         @foreach ($autores as $a)
-                            @continue($a->nombre === $pub->autor_principal) {{-- evita duplicar autor principal --}}
+                            @continue($a->nombre === $pub->autor_principal)
                             <li class="mb-1">
                                 <i class="bi bi-person"></i> {{ $a->nombre }}
                                 @if ($a->ROL_EN_PROYECTO)
@@ -163,7 +187,7 @@
             </div>
         </div>
     </div>
-    
+
     {{-- Acciones inferiores --}}
     <div class="row">
         <div class="col-12 text-right">
@@ -178,7 +202,6 @@
                     <i class="bi bi-trash"></i> Eliminar
                 </button>
             </form>
-
         </div>
     </div>
 @endsection

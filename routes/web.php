@@ -21,7 +21,6 @@ Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
-Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
@@ -92,5 +91,11 @@ Route::middleware('auth')->prefix('admin')->group(function () {
 Route::post('/extract-article', [ExtractArticleController::class, 'extract'])
     ->name('extract.article')
     ->middleware('auth'); 
+
+    Route::get('/publicaciones/export', [PublicacionController::class, 'export'])
+    ->name('publicaciones.export')
+    ->middleware('auth');
+
+    Route::pattern('id', '[0-9]+');
 
 });
