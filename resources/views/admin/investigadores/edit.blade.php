@@ -38,6 +38,7 @@
                         <input type="text" name="nombres" id="nombres" class="form-control"
                             value="{{ old('nombres', $inv->NOMBRES) }}" required>
                     </div>
+
                     <div class="col-md-6 mb-3">
                         <label for="apellidos" class="form-label">Apellidos</label>
                         <input type="text" name="apellidos" id="apellidos" class="form-control"
@@ -49,6 +50,7 @@
                         <input type="text" name="direccion" id="direccion" class="form-control"
                             value="{{ old('direccion', $inv->DIRECCION) }}">
                     </div>
+
                     <div class="col-md-6 mb-3">
                         <label for="telefono" class="form-label">Teléfono</label>
                         <input type="text" name="telefono" id="telefono" class="form-control"
@@ -61,13 +63,31 @@
                             value="{{ old('correo_personal', $inv->CORREO_PERSONAL) }}">
                     </div>
 
+                    {{-- DATOS NUEVOS DEL INVESTIGADOR --}}
+                    <div class="col-md-4 mb-3">
+                        <label for="cod_orcid" class="form-label">Código ORCID</label>
+                        <input type="text" name="cod_orcid" id="cod_orcid" class="form-control"
+                            value="{{ old('cod_orcid', $inv->cod_orcid) }}">
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="grado_academico" class="form-label">Grado académico</label>
+                        <input type="text" name="grado_academico" id="grado_academico" class="form-control"
+                            value="{{ old('grado_academico', $inv->grado_academico) }}">
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="institucion" class="form-label">Institución</label>
+                        <input type="text" name="institucion" id="institucion" class="form-control"
+                            value="{{ old('institucion', $inv->institucion) }}">
+                    </div>
+
                     {{-- Datos de investigador --}}
                     <div class="col-md-6 mb-3">
                         <label for="tipo_investigador" class="form-label">Tipo de Investigador</label>
                         <input type="text" name="tipo_investigador" id="tipo_investigador" class="form-control"
                             value="{{ old('tipo_investigador', $inv->TIPO_INVESTIGADOR) }}" required>
                     </div>
-                    
 
                     <div class="col-md-6 mb-3">
                         <label for="correo_institucional" class="form-label">Correo institucional</label>
@@ -86,8 +106,7 @@
                                 </option>
                             @endforeach
                         </select>
-                        <small class="text-muted">Mantén presionada la tecla Ctrl (o Cmd en Mac) para seleccionar
-                            varios.</small>
+                        <small class="text-muted">Mantén pulsado Ctrl o Cmd para seleccionar varios.</small>
                     </div>
                 </div>
 

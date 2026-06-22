@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use Illuminate\Validation\Rule;
 
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -32,21 +33,27 @@ class UsuarioController extends Controller
      */
     public function store(Request $request)
     {
-        //$datoss=request()->all();
-        //return response()->json($datoss);
-
         $request->validate([
-            'name' =>'required|max:200',
-            'email'=> 'required|unique:users',
-            'password'=>'required|confirmed',
+            'name'     => 'required|max:200',
+            'email'    => 'required|unique:users',
+            'password' => 'required|confirmed',
+            'rol'      => 'required|in:super_admin,publicador,espectador',
         ]);
+        
         $usuario = new User();
-        $usuario->name = $request->name;
-        $usuario->email =$request->email;
-        $usuario->password=$request->password;
+        $usuario->name     = $request->name;
+        $usuario->email    = $request->email;
+        
+        // 👉 MEJORA DE SEGURIDAD: Encriptamos la contraseña al crear
+        $usuario->password = Hash::make($request->password); 
+        
+        // 👉 NUEVO: Guardamos el rol en la base de datos
+        $usuario->rol      = $request->rol; 
 
         $usuario->save();
-        return redirect()->route('usuarios.index');
+        
+        return redirect()->route('usuarios.index')
+            ->with('ok', 'Usuario creado correctamente.');
     }
 
     /**
@@ -54,15 +61,14 @@ class UsuarioController extends Controller
      */
     public function show($id)
     {
-     $usuario = User::findOrFail    ($id);
-     return view('admin.usuarios.show',['usuario'=>$usuario] );
+        $usuario = User::findOrFail($id);
+        return view('admin.usuarios.show',['usuario'=>$usuario] );
     }
 
     /**
      * Show the form for editing the specified resource.
      */
     public function edit($id)
-
     {
         $usuario= User::FindOrFail($id);
         return view('admin.usuarios.edit',['usuario'=>$usuario] );
@@ -73,18 +79,39 @@ class UsuarioController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $usuario = User::findOrFail($id);
+
         $request->validate([
             'name' => 'required|max:100',
-            'email' => 'required|unique:users',
-            'password'=>'confirmed',
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($usuario->id), // <- evita conflicto con su propio correo
+            ],
+            'password' => [
+                'nullable',   // puede venir vacío
+                'confirmed',  // password_confirmation
+            ],
+            // 👉 NUEVO: Validamos el rol al actualizar
+            'rol' => 'required|in:super_admin,publicador,espectador', 
         ]);
-        $usuario = User::find($id);
-        $usuario->name = $request->name;
-        $usuario->email =$request->email;
-        $usuario->password=Hash::make(($request['password']));
-        $usuario->save();
+
+        $usuario->name  = $request->name;
+        $usuario->email = $request->email;
         
-        return redirect()->route('usuarios.index');
+        // 👉 NUEVO: Actualizamos el rol en la base de datos
+        $usuario->rol   = $request->rol; 
+
+        // Solo cambiar contraseña si el usuario escribió una nueva
+        if ($request->filled('password')) {
+            $usuario->password = Hash::make($request->password);
+        }
+
+        $usuario->save();
+
+        return redirect()->route('usuarios.index')
+            ->with('ok', 'Usuario actualizado correctamente.');
     }
 
     /**
@@ -92,6 +119,9 @@ class UsuarioController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $usuario = User::findOrFail($id);
+        $usuario->delete();
+
+        return redirect()->route('usuarios.index');
     }
 }

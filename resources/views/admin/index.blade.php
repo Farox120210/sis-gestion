@@ -23,7 +23,7 @@
             <div class="small-box bg-warning">
                 <div class="inner">
                     <h3>{{ $totalEnCurso ?? 0 }}</h3>
-                    <p>En curso</p>
+                    <p>En desarrollo</p>
                 </div>
                 <div class="icon"><i class="fas fa-hourglass-half"></i></div>
             </div>
@@ -32,7 +32,7 @@
             <div class="small-box bg-success">
                 <div class="inner">
                     <h3>{{ $totalFinalizados ?? 0 }}</h3>
-                    <p>Finalizados</p>
+                    <p>Publicados</p>
                 </div>
                 <div class="icon"><i class="fas fa-check-circle"></i></div>
             </div>
@@ -40,58 +40,85 @@
         <div class="col-md-3 col-sm-6 mb-3">
             <div class="small-box bg-info">
                 <div class="inner">
-                    <h3>{{ $totalPublicados ?? 0 }}</h3>
-                    <p>Publicados</p>
+                    <h3>{{ $totalSustentados ?? 0 }}</h3>
+                    <p>Sustentados</p>
                 </div>
                 <div class="icon"><i class="fas fa-bullhorn"></i></div>
             </div>
         </div>
+
+
+
+
     </div>
 
     {{-- FILA 1: PASTELES / DONAS --}}
-<div class="row dashboard g-2">
-  <div class="col-xl-4 col-lg-4 mb-2">
-    <div class="card card-outline card-primary card-compact h-100">
-      <div class="card-header"><h3 class="card-title mb-0">Publicaciones por estado</h3></div>
-      <div class="card-body"><div class="chart-box"><canvas id="chartPorEstado"></canvas></div></div>
+    <div class="row dashboard g-2">
+        <div class="col-xl-4 col-lg-4 mb-2">
+            <div class="card card-outline card-primary card-compact h-100">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">Publicaciones por estado</h3>
+                </div>
+                <div class="card-body">
+                    <div class="chart-box"><canvas id="chartPorEstado"></canvas></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-lg-4 mb-2">
+            <div class="card card-outline card-primary card-compact h-100">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">Investigación por tipo</h3>
+                </div>
+                <div class="card-body">
+                    <div class="chart-box"><canvas id="chartTipo"></canvas></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-lg-4 mb-2">
+            <div class="card card-outline card-primary card-compact h-100">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">Top 5 autores</h3>
+                </div>
+                <div class="card-body">
+                    <div class="chart-box"><canvas id="chartAutores"></canvas></div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="col-xl-4 col-lg-4 mb-2">
-    <div class="card card-outline card-primary card-compact h-100">
-      <div class="card-header"><h3 class="card-title mb-0">Investigación por tipo</h3></div>
-      <div class="card-body"><div class="chart-box"><canvas id="chartTipo"></canvas></div></div>
-    </div>
-  </div>
-  <div class="col-xl-4 col-lg-4 mb-2">
-    <div class="card card-outline card-primary card-compact h-100">
-      <div class="card-header"><h3 class="card-title mb-0">Top 5 autores</h3></div>
-      <div class="card-body"><div class="chart-box"><canvas id="chartAutores"></canvas></div></div>
-    </div>
-  </div>
-</div>
 
-{{-- FILA 2: BARRAS + LÍNEA --}}
-<div class="row dashboard g-2">
-  <div class="col-xl-4 col-lg-4 mb-2">
-    <div class="card card-outline card-primary card-compact h-100">
-      <div class="card-header"><h3 class="card-title mb-0">Publicaciones por año</h3></div>
-      <div class="card-body"><div class="chart-box"><canvas id="chartPorAnio"></canvas></div></div>
+    {{-- FILA 2: BARRAS + LÍNEA --}}
+    <div class="row dashboard g-2">
+        <div class="col-xl-4 col-lg-4 mb-2">
+            <div class="card card-outline card-primary card-compact h-100">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">Proyectos por año</h3>
+                </div>
+                <div class="card-body">
+                    <div class="chart-box"><canvas id="chartPorAnio"></canvas></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-lg-4 mb-2">
+            <div class="card card-outline card-primary card-compact h-100">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">Top 7 áreas</h3>
+                </div>
+                <div class="card-body">
+                    <div class="chart-box"><canvas id="chartAreas"></canvas></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-lg-4 mb-2">
+            <div class="card card-outline card-primary card-compact h-100">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">Publicados en el año (últimos 12)</h3>
+                </div>
+                <div class="card-body">
+                    <div class="chart-box"><canvas id="chartMes"></canvas></div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="col-xl-4 col-lg-4 mb-2">
-    <div class="card card-outline card-primary card-compact h-100">
-      <div class="card-header"><h3 class="card-title mb-0">Top 7 áreas</h3></div>
-      <div class="card-body"><div class="chart-box"><canvas id="chartAreas"></canvas></div></div>
-    </div>
-  </div>
-  <div class="col-xl-4 col-lg-4 mb-2">
-    <div class="card card-outline card-primary card-compact h-100">
-      <div class="card-header"><h3 class="card-title mb-0">Por mes (últimos 12)</h3></div>
-      <div class="card-body"><div class="chart-box"><canvas id="chartMes"></canvas></div></div>
-    </div>
-  </div>
-</div>
-
 @endsection
 
 @push('styles')
@@ -195,8 +222,18 @@
             const topAutoresLabels = @json($topAutoresLabels ?? []);
             const topAutoresData = (@json($topAutoresData ?? [])).map(Number);
 
-            const palette = ['#4e79a7', '#f28e2c', '#e15759', '#76b7b2', '#59a14f', '#edc949', '#af7aa1', '#ff9da7',
-                '#9c755f', '#bab0ab'
+            // Paleta institucional (basada en tonos corporativos / AdminLTE)
+            const palette = [
+                '#004b8d', // azul institucional oscuro
+                '#007bff', // azul primary
+                '#17a2b8', // info (turquesa)
+                '#28a745', // success (verde)
+                '#6c757d', // gris
+                '#ffc107', // amarillo/acento
+                '#6610f2', // morado institucional/acento
+                '#20c997', // verde agua
+                '#fd7e14', // naranja/acento
+                '#dc3545' // rojo (para resaltar)
             ];
             const bg = n => Array.from({
                 length: n
@@ -326,7 +363,7 @@
                         borderColor: '#4e79a7',
                         borderWidth: 2,
                         pointRadius: 2,
-                        pointHitRadius: 6 
+                        pointHitRadius: 6
                     }]
                 },
                 options: {

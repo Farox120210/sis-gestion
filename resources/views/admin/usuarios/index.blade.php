@@ -10,15 +10,15 @@
                 <div class="card-header">
                     <h3 class="card-title">Datos registrados</h3>
 
-                    <div class="card-tools">
-                        <a href="{{ url('/admin/usuarios/create') }}" class="btn btn-primary">
-                            <i class="bi bi-person-add"></i> Nuevo usuario
-                        </a>
+                    @can('gestionar-usuarios')
+                        <div class="card-tools">
+                            <a href="{{ url('/admin/usuarios/create') }}" class="btn btn-primary">
+                                <i class="bi bi-person-add"></i> Nuevo usuario
+                            </a>
+                        </div>
+                    @endcan
                     </div>
-                    <!-- /.card-tools -->
-                </div>
 
-                <!-- /.card-header -->
                 <div class="card-body" style="display: block;">
                     <table class="table table-bordered table-sm table-striped table-hover">
                         <thead>
@@ -42,42 +42,43 @@
                                 $contador = 0;
                             @endphp
                             @foreach ($usuarios as $usuario)
-                             @php
-                                $contador = $contador+1;
-                            @endphp    
-                            <tr>
+                                @php
+                                    $contador = $contador + 1;
+                                @endphp
+                                <tr>
                                     <td>
                                         <center>{{ $contador }}</center>
                                     </td>
                                     <td>{{ $usuario->name }}</td>
                                     <td>{{ $usuario->email }}</td>
-                                   <td style="text-align:center">
-                                     <div class="btn-group" role="group" aria-label="Basic example">
-                                        <a href="{{route('usuarios.show',$usuario->id)}}" type="button" class="btn btn-warning">            
-                                            <i class="bi bi-eye"></i> Ver
-                                        </a>
-                                        <a href="{{route('usuarios.edit',$usuario->id)}}" type="buton" class="btn btn-success">            
-                                            <i class="bi bi-pencil-square">
-                                                </i> Actualizar</a>
-                                        <a href="" type="button" class="btn btn-danger">
-                                            <i class="bi bi-trash"></i> Eliminar</a>
+                                    <td style="text-align:center">
+                                        <div class="btn-group" role="group" aria-label="Basic example">
                                             
-                                        
-                                     </div>
-                                    </td>
-                                    <td>
-                                        <center>
-                                            <!-- Acciones aquí -->
-                                        </center>
+                                            <a href="{{ route('usuarios.show', $usuario->id) }}" type="button" class="btn btn-warning">
+                                                <i class="bi bi-eye"></i> Ver
+                                            </a>
+                                            
+                                            @can('gestionar-usuarios')
+                                                <a href="{{ route('usuarios.edit', $usuario->id) }}" type="button" class="btn btn-success">
+                                                    <i class="bi bi-pencil-square"></i> Actualizar
+                                                </a>
+                                                <form action="{{ route('usuarios.destroy', $usuario->id) }}" method="POST" style="display:inline-block;">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-danger" onclick="return confirm('¿Seguro que deseas eliminar este usuario?')">
+                                                        <i class="bi bi-trash"></i> Eliminar
+                                                    </button>
+                                                </form>
+                                            @endcan
+
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
-                <!-- /.card-body -->
+                </div>
             </div>
-            <!-- /.card -->
-        </div>
     </div>
 @endsection

@@ -19,7 +19,8 @@
 
     <div class="row">
         <div class="col-md-12">
-            <form action="{{ route('publicaciones.update', $pub->id_publicacion) }}" method="POST">
+            <form action="{{ route('publicaciones.update', $pub->id_publicacion) }}" method="POST"
+                enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
 
@@ -31,7 +32,7 @@
                                 <i class="bi bi-arrow-left"></i> Volver
                             </a>
                             <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-save2"></i> Guardar cambios
+                                <i class="bi bi-save2"></i> Guardar cambio
                             </button>
                         </div>
                     </div>
@@ -87,17 +88,18 @@
                                 </select>
                             </div>
                             <div class="col-md-4 mb-3">
-                                <label for="ID_TIPO" class="form-label">Tipo de proyecto</label>
-                                <select name="ID_TIPO" id="ID_TIPO" class="form-select">
-                                    <option value="">-- Selecciona --</option>
+                                <label for="id_tipo" class="form-label">Tipo de proyecto</label>
+                                <select name="id_tipo" id="id_tipo" class="form-control">
+                                    <option value="">— Sin tipo —</option>
                                     @foreach ($tipos as $t)
                                         <option value="{{ $t->ID_TIPO }}"
-                                            {{ old('ID_TIPO', $proyecto->ID_TIPO ?? '') == $t->ID_TIPO ? 'selected' : '' }}>
+                                            {{ (int) old('id_tipo', $pub->id_tipo) === (int) $t->ID_TIPO ? 'selected' : '' }}>
                                             {{ $t->NOMBRE_TIPO }}
                                         </option>
                                     @endforeach
                                 </select>
                             </div>
+
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Estado del proyecto *</label>
                                 <select name="id_estado" class="form-control" required>
@@ -138,22 +140,45 @@
                                     @endforeach
                                 </select>
                             </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Grupo de investigación</label>
+                                <select name="id_grupo" class="form-control">
+                                    <option value="">— Ninguno —</option>
+                                    @foreach ($grupos as $g)
+                                        <option value="{{ $g->ID_GRUPO }}"
+                                            {{ (int) old('id_grupo', $pub->id_grupo) === (int) $g->ID_GRUPO ? 'selected' : '' }}>
+                                            {{ $g->NOMBRE_GRUPO }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <!--<div class="col-md-12 mb-3">
+                                <div class="form-group">
+                                    <label for="pdf">Subir PDF (para archivo final)</label>
+                                    <input type="file" name="pdf" class="form-control">
+                                    <small class="text-muted">Este PDF se guardará como el documento final del proyecto,en caso se subió un PDF anterior este se borrará</small>
+                                </div>
+                            </div>-->
+                                <div class="col-md-12 mb-3">
+                                    <div class="form-group">
+                                        <label for="pdf">Subir nuevo PDF (opcional)</label>
+
+                                        <input type="file" name="pdf" id="pdf" class="form-control"
+                                            accept=".pdf">
+
+                                        <small class="text-muted">
+                                            Este PDF se guardará como el documento final del proyecto. Si ya existe un PDF
+                                            anterior, al subir uno nuevo <strong>el anterior se borrará
+                                                permanentemente</strong>. Si no deseas cambiar el PDF actual, deja este
+                                            campo vacío.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Grupo de investigación</label>
-                    <select name="id_grupo" class="form-control">
-                        <option value="">— Ninguno —</option>
-                        @foreach ($grupos as $g)
-                            <option value="{{ $g->ID_GRUPO }}"
-                                {{ (int) old('id_grupo', $pub->id_grupo) === (int) $g->ID_GRUPO ? 'selected' : '' }}>
-                                {{ $g->NOMBRE_GRUPO }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+
 
                 <div class="card card-outline card-info">
                     <div class="card-header">

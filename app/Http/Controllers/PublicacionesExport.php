@@ -3,78 +3,53 @@
 namespace App\Exports;
 
 use App\Models\Publicacion;
-use Carbon\Carbon;
-use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 
-class PublicacionesExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize
+class PublicacionesExport implements FromCollection, WithHeadings
 {
-    public function __construct(
-        protected ?string $from = null,
-        protected ?string $to = null
-    ) {}
+    protected $tipo;
+    protected $q;
 
-    public function query()
+    public function __construct($tipo = null, $q = null)
     {
-        $q = Publicacion::query()
-            ->with(['area','tipo','estado','autor','grupo'])
-            ->orderByDesc('created_at');
+        $this->tipo = $tipo;
+        $this->q    = $q;
+    }
 
-        // Filtro por rango de creación (opcional)
-        if ($this->from) {
-            $q->whereDate('created_at', '>=', $this->from);
-        }
-        if ($this->to) {
-            $q->whereDate('created_at', '<=', $this->to);
+    public function collection()
+    {
+        $query = Publicacion::query();
+
+        // Filtro por tipo de investigación
+        if ($this->tipo) {
+            $query->where('tipo', $this->tipo);
         }
 
-        return $q;
+        // Buscador general (igual que en el index)
+        if ($this->q) {
+            $search = $this->q;
+            $query->where(function ($q) use ($search) {
+                $q->where('titulo', 'like', "%{$search}%")
+                    ->orWhere('autores', 'like', "%{$search}%")
+                    ->orWhere('grupo', 'like', "%{$search}%")
+                    ->orWhere('area', 'like', "%{$search}%");
+            });
+        }
+
+        return $query
+            ->select('titulo', 'autores', 'grupo', 'area', 'tipo')
+            ->get();
     }
 
     public function headings(): array
     {
         return [
-            'ID',
             'Título',
-            'Año proyecto',
-            'Año publicación',
-            'Fecha inicio',
-            'Fecha fin',
-            'Presupuesto',
-            'Área',
-            'Tipo',
-            'Estado',
-            'Autor principal',
-            'Grupo',
-            'Coautores (IDs)',
-            'Creado el (fecha)',
-            'Creado a las (hora)',
-        ];
-    }
-
-    public function map($p): array
-    {
-        // Ajusta los nombres de campos según tu esquema real
-        return [
-            $p->id ?? $p->ID ?? null,
-            $p->titulo ?? '',
-            $p->anio ?? $p->anio_proyecto ?? null,
-            $p->anio_publicacion ?? null,
-            optional($p->fecha_inicio)->format('Y-m-d') ?? $p->fecha_inicio,
-            optional($p->fecha_fin)->format('Y-m-d') ?? $p->fecha_fin,
-            $p->presupuesto ?? null,
-            // Si tus relaciones devuelven NOMBRE_* úsalas; si no, usa ->nombre
-            optional($p->area)->NOMBRE_AREA ?? optional($p->area)->nombre ?? '',
-            optional($p->tipo)->NOMBRE_TIPO ?? optional($p->tipo)->nombre ?? '',
-            optional($p->estado)->NOMBRE_ESTADO ?? optional($p->estado)->nombre ?? '',
-            optional($p->autor)->nombre ?? '',
-            optional($p->grupo)->NOMBRE_GRUPO ?? optional($p->grupo)->nombre ?? '',
-            // Ejemplo simple: lista de IDs de coautores si existe relación many-to-many
-            method_exists($p, 'coautores') ? $p->coautores->pluck('id')->join(', ') : '',
-            optional($p->created_at)->format('Y-m-d'),
-            optional($p->created_at)->format('H:i:s'),
+            'Autores',
+            'Grupo de investigación',
+            'Área investigativa',
+            'Tipo de investigación',
         ];
     }
 }

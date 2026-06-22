@@ -18,7 +18,7 @@ class AdminController extends Controller
         // En curso / Finalizado (por nombre en estado_proyecto)
         $totalEnCurso = DB::table('proyecto as p')
             ->join('estado_proyecto as ep', 'ep.ID_ESTADO', '=', 'p.ID_ESTADO')
-            ->where('ep.NOMBRE_ESTADO', 'En curso')
+            ->where('ep.NOMBRE_ESTADO', 'EN DESARROLLO')
             ->count();
 
         $totalFinalizados = DB::table('proyecto as p')
@@ -63,17 +63,19 @@ class AdminController extends Controller
         $porAreaLabels = $porAreaRows->pluck('area');
         $porAreaData   = $porAreaRows->pluck('total');
 
-        // ===== Tipo (Artículo vs Proyecto) =====
-        // Artículo: existe en proyecto_revista. Proyecto: no tiene revista asociada.
-        $conRevista = DB::table('proyecto as p')
-            ->join('proyecto_revista as pr', 'pr.ID_PROYECTO', '=', 'p.ID_PROYECTO')
-            ->distinct('p.ID_PROYECTO')
-            ->count('p.ID_PROYECTO');
+        // ===== Investigación por tipo =====
+// Relación: proyecto.ID_TIPO → tipos_proyecto.ID_TIPO
 
-        $sinRevista = $totalPublicaciones - $conRevista;
+$porTipoRows = DB::table('proyecto as p')
+    ->join('tipos_proyecto as tp', 'tp.ID_TIPO', '=', 'p.ID_TIPO')
+    ->selectRaw('tp.NOMBRE_TIPO as tipo, COUNT(*) as total')
+    ->groupBy('tp.NOMBRE_TIPO')
+    ->orderByDesc('total')
+    ->get();
 
-        $porTipoLabels = collect(['Proyecto','Artículo']);
-        $porTipoData   = collect([$sinRevista, $conRevista]);
+$porTipoLabels = $porTipoRows->pluck('tipo');
+$porTipoData   = $porTipoRows->pluck('total');
+
 
         // ===== Últimos 12 meses (por FECHA_INICIO/FECHA_FIN) =====
         // Tomamos COALESCE(FECHA_INICIO, FECHA_FIN) para agrupar por mes.

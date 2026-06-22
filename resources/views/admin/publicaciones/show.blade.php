@@ -52,6 +52,10 @@
                             {{ $pub->area ?: '—' }}
                         </div>
                         <div class="col-sm-6 mb-2">
+                            <strong>Tipo de investigación:</strong><br>
+                            {{ $pub->tipo ?: '—' }}
+                        </div>
+                        <div class="col-sm-6 mb-2">
                             <strong>Presupuesto:</strong><br>
                             {{ is_null($pub->presupuesto) ? '—' : number_format($pub->presupuesto, 2) }}
                         </div>
@@ -72,20 +76,15 @@
         <div class="col-md-5">
             <div class="card card-outline card-info">
                 <div class="card-header">
-                    <h3 class="card-title mb-0">Revista</h3>
+                    <h3 class="card-title mb-0">Datos de publicación</h3>
                 </div>
                 <div class="card-body">
                     <div class="mb-2">
-                        <strong>Nombre:</strong><br>
+                        <strong>Medio:</strong><br>
                         {{ $pub->revista }}
                     </div>
                     <div class="mb-2">
-                        <strong>Editorial:</strong><br>
-                        {{ $pub->editorial ?: '—' }}
-                    </div>
-                    <div class="mb-0">
-                        <strong>País:</strong><br>
-                        {{ $pub->pais ?: '—' }}
+                        <strong>Link:</strong><br>
                     </div>
                 </div>
             </div>

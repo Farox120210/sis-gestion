@@ -86,230 +86,252 @@ class InvestigadorController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            // Persona
-            'nombres'          => ['required', 'string', 'max:100'],
-            'apellidos'        => ['required', 'string', 'max:100'],
-            'direccion'        => ['nullable', 'string', 'max:200'],
-            'telefono'         => ['nullable', 'string', 'max:15'],
-            'correo_personal'  => ['nullable', 'email', 'max:100'],
+public function store(Request $request)
+{
+    $data = $request->validate([
+        // Persona
+        'nombres'          => ['required', 'string', 'max:100'],
+        'apellidos'        => ['required', 'string', 'max:100'],
+        'direccion'        => ['nullable', 'string', 'max:200'],
+        'telefono'         => ['nullable', 'string', 'max:15'],
+        'correo_personal'  => ['nullable', 'email', 'max:100'],
 
-            // Investigador
-            'tipo_investigador'     => ['required', 'string', 'max:50'],
-            'correo_institucional'  => ['nullable', 'email', 'max:100'],
+        // Investigador
+        'tipo_investigador'     => ['required', 'string', 'max:50'],
+        'correo_institucional'  => ['nullable', 'email', 'max:100'],
 
-            // Asignación inicial a grupo (opcional)
-            'id_grupo'        => ['nullable', 'integer', Rule::exists('grupos_investigacion', 'ID_GRUPO')],
-            'fecha_ingreso'   => ['nullable', 'date'],
-            'fecha_salida'    => ['nullable', 'date', 'after_or_equal:fecha_ingreso'],
+        // Nuevos campos
+        'cod_orcid'        => ['nullable', 'string', 'max:20'],
+        'grado_academico'  => ['nullable', 'string', 'max:100'],
+        'institucion'      => ['nullable', 'string', 'max:150'],
+
+        // Grupo inicial (coincide con el create.blade)
+        'id_grupo'         => ['nullable', 'integer', Rule::exists('grupos_investigacion', 'ID_GRUPO')],
+    ]);
+
+    DB::beginTransaction();
+    try {
+        // 1) Crear persona
+        $idPersona = DB::table('persona')->insertGetId([
+            'NOMBRES'         => $data['nombres'],
+            'APELLIDOS'       => $data['apellidos'],
+            'DIRECCION'       => $data['direccion'] ?? null,
+            'TELEFONO'        => $data['telefono'] ?? null,
+            'CORREO_PERSONAL' => $data['correo_personal'] ?? null,
         ]);
 
-        DB::beginTransaction();
-        try {
-            // 1) persona
-            $idPersona = DB::table('persona')->insertGetId([
-                'NOMBRES'          => $data['nombres'],
-                'APELLIDOS'        => $data['apellidos'],
-                'DIRECCION'        => $data['direccion'] ?? null,
-                'TELEFONO'         => $data['telefono'] ?? null,
-                'CORREO_PERSONAL'  => $data['correo_personal'] ?? null,
+        // 2) Crear investigador
+        $idInv = DB::table('investigador')->insertGetId([
+            'ID_PERSONA'           => $idPersona,
+            'TIPO_INVESTIGADOR'    => $data['tipo_investigador'],
+            'CORREO_INSTITUCIONAL' => $data['correo_institucional'] ?? null,
+            'cod_orcid'            => $data['cod_orcid'] ?? null,
+            'grado_academico'      => $data['grado_academico'] ?? null,
+            'institucion'          => $data['institucion'] ?? null,
+        ]);
+
+        // 3) Guardar grupo (si eligió uno)
+        if (!empty($data['id_grupo'])) {
+            DB::table('investigador_grupo')->insert([
+                'ID_INVESTIGADOR' => $idInv,
+                'ID_GRUPO'        => (int) $data['id_grupo'],
+                'FECHA_INGRESO'   => now()->toDateString(),
             ]);
-
-            // 2) investigador
-            $idInvestigador = DB::table('investigador')->insertGetId([
-                'ID_PERSONA'          => $idPersona,
-                'TIPO_INVESTIGADOR'   => $data['tipo_investigador'],
-                'CORREO_INSTITUCIONAL' => $data['correo_institucional'] ?? null,
-            ]);
-
-            // 3) (opcional) asignación a grupo
-            if (!empty($data['id_grupo'])) {
-                // Constraint UNIQUE(ID_INVESTIGADOR, ID_GRUPO) en tu DDL
-                DB::table('investigador_grupo')->updateOrInsert(
-                    [
-                        'ID_INVESTIGADOR' => $idInvestigador,
-                        'ID_GRUPO'        => $data['id_grupo'],
-                    ],
-                    [
-                        'FECHA_INGRESO' => $data['fecha_ingreso'] ?? null,
-                        'FECHA_SALIDA'  => $data['fecha_salida'] ?? null,
-                    ]
-                );
-            }
-
-            DB::commit();
-            return redirect()->route('admin.investigadores.index')
-                ->with('ok', 'Investigador creado correctamente.');
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            Log::error('Error al crear investigador', ['msg' => $e->getMessage()]);
-            return back()->withInput()->with('error', 'No se pudo crear el investigador: ' . $e->getMessage());
         }
+
+        DB::commit();
+        return redirect()->route('investigadores.index')
+            ->with('ok', 'Investigador registrado correctamente.');
+    } catch (\Throwable $e) {
+        DB::rollBack();
+        Log::error('Error al registrar investigador', ['msg' => $e->getMessage()]);
+        return back()->withInput()->with('error', 'No se pudo registrar: ' . $e->getMessage());
     }
+}
+
+
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
-    {
-        $inv = DB::table('investigador as i')
-            ->join('persona as p', 'p.ID_PERSONA', '=', 'i.ID_PERSONA')
-            ->leftJoin('investigador_grupo as ig', 'ig.ID_INVESTIGADOR', '=', 'i.ID_INVESTIGADOR')
-            ->leftJoin('grupos_investigacion as g', 'g.ID_GRUPO', '=', 'ig.ID_GRUPO')
-            ->where('i.ID_INVESTIGADOR', $id)
-            ->selectRaw('
-                i.ID_INVESTIGADOR,
-                p.ID_PERSONA,
-                p.NOMBRES, p.APELLIDOS, p.DIRECCION, p.TELEFONO, p.CORREO_PERSONAL,
-                i.TIPO_INVESTIGADOR, i.CORREO_INSTITUCIONAL
-            ')
-            ->first();
+public function show(string $id)
+{
+    $inv = DB::table('investigador as i')
+        ->join('persona as p', 'p.ID_PERSONA', '=', 'i.ID_PERSONA')
+        ->where('i.ID_INVESTIGADOR', $id)
+        ->select([
+            'i.ID_INVESTIGADOR',
+            'p.ID_PERSONA',
+            'p.NOMBRES',
+            'p.APELLIDOS',
+            'p.DIRECCION',
+            'p.TELEFONO',
+            'p.CORREO_PERSONAL',
+            'i.TIPO_INVESTIGADOR',
+            'i.CORREO_INSTITUCIONAL',
 
-        if (!$inv) abort(404);
+            // NUEVOS CAMPOS
+            'i.cod_orcid',
+            'i.grado_academico',
+            'i.institucion',
+        ])
+        ->first();
 
-        $grupos = DB::table('investigador_grupo as ig')
-            ->join('grupos_investigacion as g', 'g.ID_GRUPO', '=', 'ig.ID_GRUPO')
-            ->where('ig.ID_INVESTIGADOR', $id)
-            ->select('ig.ID_INVESTIGADOR_GRUPO', 'g.ID_GRUPO', 'g.NOMBRE_GRUPO', 'ig.FECHA_INGRESO', 'ig.FECHA_SALIDA')
-            ->orderBy('g.NOMBRE_GRUPO')
-            ->get();
+    if (!$inv) abort(404);
 
-        return view('admin.investigadores.show', compact('inv', 'grupos'));
-    }
+    $grupos = DB::table('investigador_grupo as ig')
+        ->join('grupos_investigacion as g', 'g.ID_GRUPO', '=', 'ig.ID_GRUPO')
+        ->where('ig.ID_INVESTIGADOR', $id)
+        ->select([
+            'g.NOMBRE_GRUPO',
+            'ig.FECHA_INGRESO',
+            'ig.FECHA_SALIDA',
+        ])
+        ->get();
+
+    return view('admin.investigadores.show', compact('inv', 'grupos'));
+}
+
+
 
     /**
      * Show the form for editing the specified resource.
      */
     public function edit(string $id)
-    {
-        $inv = DB::table('investigador as i')
-            ->join('persona as p', 'p.ID_PERSONA', '=', 'i.ID_PERSONA')
-            ->where('i.ID_INVESTIGADOR', $id)
-            ->select([
-                'i.ID_INVESTIGADOR',
-                'p.ID_PERSONA',
-                'p.NOMBRES',
-                'p.APELLIDOS',
-                'p.DIRECCION',
-                'p.TELEFONO',
-                'p.CORREO_PERSONAL',
-                'i.TIPO_INVESTIGADOR',
-                'i.CORREO_INSTITUCIONAL',
-            ])
-            ->first();
+{
+    $inv = DB::table('investigador as i')
+        ->join('persona as p', 'p.ID_PERSONA', '=', 'i.ID_PERSONA')
+        ->where('i.ID_INVESTIGADOR', $id)
+        ->select([
+            'i.ID_INVESTIGADOR',
+            'p.ID_PERSONA',
+            'p.NOMBRES',
+            'p.APELLIDOS',
+            'p.DIRECCION',
+            'p.TELEFONO',
+            'p.CORREO_PERSONAL',
+            'i.TIPO_INVESTIGADOR',
+            'i.CORREO_INSTITUCIONAL',
+            'i.cod_orcid',
+            'i.grado_academico',
+            'i.institucion',
+        ])
+        ->first();
 
-        if (!$inv) abort(404);
+    if (!$inv) abort(404);
 
-        $grupos = DB::table('grupos_investigacion')
-            ->select('ID_GRUPO', 'NOMBRE_GRUPO')
-            ->orderBy('NOMBRE_GRUPO')
-            ->get();
+    $grupos = DB::table('grupos_investigacion')
+        ->select('ID_GRUPO', 'NOMBRE_GRUPO')
+        ->orderBy('NOMBRE_GRUPO')
+        ->get();
 
-        // grupos actuales del investigador
-        $gruposActuales = DB::table('investigador_grupo')
-            ->where('ID_INVESTIGADOR', $id)
-            ->pluck('ID_GRUPO')
-            ->toArray();
+    $gruposActuales = DB::table('investigador_grupo')
+        ->where('ID_INVESTIGADOR', $id)
+        ->pluck('ID_GRUPO')
+        ->toArray();
 
-        return view('admin.investigadores.edit', compact('inv', 'grupos', 'gruposActuales'));
-    }
+    return view('admin.investigadores.edit', compact('inv', 'grupos', 'gruposActuales'));
+}
+
 
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, string $id)
-    {
-        $data = $request->validate([
-            // Persona
-            'nombres'          => ['required', 'string', 'max:100'],
-            'apellidos'        => ['required', 'string', 'max:100'],
-            'direccion'        => ['nullable', 'string', 'max:200'],
-            'telefono'         => ['nullable', 'string', 'max:15'],
-            'correo_personal'  => ['nullable', 'email', 'max:100'],
+{
+    $data = $request->validate([
+        // Persona
+        'nombres'          => ['required', 'string', 'max:100'],
+        'apellidos'        => ['required', 'string', 'max:100'],
+        'direccion'        => ['nullable', 'string', 'max:200'],
+        'telefono'         => ['nullable', 'string', 'max:15'],
+        'correo_personal'  => ['nullable', 'email', 'max:100'],
 
-            // Investigador
-            'tipo_investigador'     => ['required', 'string', 'max:50'],
-            'correo_institucional'  => ['nullable', 'email', 'max:100'],
+        // Investigador
+        'tipo_investigador'     => ['required', 'string', 'max:50'],
+        'correo_institucional'  => ['nullable', 'email', 'max:100'],
 
-            // Grupos (opcional): arreglo de IDs
-            'grupos'           => ['nullable', 'array'],
-            'grupos.*' => ['integer', Rule::exists('grupos_investigacion', 'ID_GRUPO')],
-        ]);
+        // Nuevos campos
+        'cod_orcid'        => ['nullable', 'string', 'max:20'],
+        'grado_academico'  => ['nullable', 'string', 'max:100'],
+        'institucion'      => ['nullable', 'string', 'max:150'],
 
-        // FIX: Rule anterior tiene un typo en columna. Corregimos:
-        if (!empty($data['grupos'])) {
-            foreach ($data['grupos'] as $gid) {
-                // validación manual básica (existe ID_GRUPO)
-                $exists = DB::table('grupos_investigacion')->where('ID_GRUPO', $gid)->exists();
-                if (!$exists) {
-                    return back()->withInput()->withErrors(['grupos' => 'Uno o más grupos no existen.']);
-                }
-            }
-        }
+        // Grupos
+        'grupos'           => ['nullable', 'array'],
+        'grupos.*'         => ['integer', Rule::exists('grupos_investigacion', 'ID_GRUPO')],
+    ]);
 
-        DB::beginTransaction();
-        try {
-            $inv = DB::table('investigador')->where('ID_INVESTIGADOR', $id)->first();
-            if (!$inv) throw new \RuntimeException('No se encontró el investigador.');
+    DB::beginTransaction();
+    try {
 
-            // 1) persona
-            DB::table('persona')
-                ->where('ID_PERSONA', $inv->ID_PERSONA)
-                ->update([
-                    'NOMBRES'         => $data['nombres'],
-                    'APELLIDOS'       => $data['apellidos'],
-                    'DIRECCION'       => $data['direccion'] ?? null,
-                    'TELEFONO'        => $data['telefono'] ?? null,
-                    'CORREO_PERSONAL' => $data['correo_personal'] ?? null,
-                ]);
+        $inv = DB::table('investigador')->where('ID_INVESTIGADOR', $id)->first();
+        if (!$inv) throw new \RuntimeException('No se encontró el investigador.');
 
-            // 2) investigador
-            DB::table('investigador')
+        // 1) Actualizar persona
+        DB::table('persona')
+            ->where('ID_PERSONA', $inv->ID_PERSONA)
+            ->update([
+                'NOMBRES'         => $data['nombres'],
+                'APELLIDOS'       => $data['apellidos'],
+                'DIRECCION'       => $data['direccion'] ?? null,
+                'TELEFONO'        => $data['telefono'] ?? null,
+                'CORREO_PERSONAL' => $data['correo_personal'] ?? null,
+            ]);
+
+        // 2) Actualizar investigador
+        DB::table('investigador')
+            ->where('ID_INVESTIGADOR', $id)
+            ->update([
+                'TIPO_INVESTIGADOR'    => $data['tipo_investigador'],
+                'CORREO_INSTITUCIONAL' => $data['correo_institucional'] ?? null,
+                'cod_orcid'            => $data['cod_orcid'] ?? null,
+                'grado_academico'      => $data['grado_academico'] ?? null,
+                'institucion'          => $data['institucion'] ?? null,
+            ]);
+
+        // 3) Sincronizar grupos
+        if ($request->has('grupos')) {
+
+            $nuevos = collect($data['grupos'] ?? [])
+                ->map(fn($v) => (int)$v)
+                ->unique()
+                ->values()
+                ->all();
+
+            $actuales = DB::table('investigador_grupo')
                 ->where('ID_INVESTIGADOR', $id)
-                ->update([
-                    'TIPO_INVESTIGADOR'   => $data['tipo_investigador'],
-                    'CORREO_INSTITUCIONAL' => $data['correo_institucional'] ?? null,
-                ]);
+                ->pluck('ID_GRUPO')
+                ->map(fn($v) => (int)$v)
+                ->all();
 
-            // 3) sincroniza grupos (si se envió el campo)
-            if ($request->has('grupos')) {
-                $nuevos = collect($data['grupos'] ?? [])->map(fn($v) => (int)$v)->unique()->values()->all();
+            $agregar = array_diff($nuevos, $actuales);
+            $quitar  = array_diff($actuales, $nuevos);
 
-                // Grupos actuales
-                $actuales = DB::table('investigador_grupo')
-                    ->where('ID_INVESTIGADOR', $id)
-                    ->pluck('ID_GRUPO')
-                    ->map(fn($v) => (int)$v)
-                    ->all();
-
-                $agregar = array_diff($nuevos, $actuales);
-                $quitar  = array_diff($actuales, $nuevos);
-
-                foreach ($agregar as $gid) {
-                    DB::table('investigador_grupo')->updateOrInsert(
-                        ['ID_INVESTIGADOR' => $id, 'ID_GRUPO' => $gid],
-                        ['FECHA_INGRESO' => now()->toDateString()]
-                    );
-                }
-                if (!empty($quitar)) {
-                    DB::table('investigador_grupo')
-                        ->where('ID_INVESTIGADOR', $id)
-                        ->whereIn('ID_GRUPO', $quitar)
-                        ->delete();
-                }
+            foreach ($agregar as $gid) {
+                DB::table('investigador_grupo')->updateOrInsert(
+                    ['ID_INVESTIGADOR' => $id, 'ID_GRUPO' => $gid],
+                    ['FECHA_INGRESO' => now()->toDateString()]
+                );
             }
 
-            DB::commit();
-            return redirect()->route('investigadores.index')
-                ->with('ok', 'Investigador actualizado correctamente.');
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            Log::error('Error al actualizar investigador', ['msg' => $e->getMessage()]);
-            return back()->withInput()->with('error', 'No se pudo actualizar: ' . $e->getMessage());
+            if (!empty($quitar)) {
+                DB::table('investigador_grupo')
+                    ->where('ID_INVESTIGADOR', $id)
+                    ->whereIn('ID_GRUPO', $quitar)
+                    ->delete();
+            }
         }
+
+        DB::commit();
+        return redirect()->route('investigadores.index')
+            ->with('ok', 'Investigador actualizado correctamente.');
+
+    } catch (\Throwable $e) {
+        DB::rollBack();
+        Log::error('Error al actualizar investigador', ['msg' => $e->getMessage()]);
+        return back()->withInput()->with('error', 'No se pudo actualizar: ' . $e->getMessage());
     }
+}
 
     /**
      * Remove the specified resource from storage.

@@ -15,57 +15,68 @@ class PublicacionDashboardController extends Controller
         // ========= KPIs (tomados de PROYECTO) =========
         $totalPublicaciones = (int) Proyecto::count();
 
-        // Estados por nombre en catálogo estado_proyecto
-        $idEnCurso = DB::table('estado_proyecto')->where('NOMBRE_ESTADO','En curso')->value('ID_ESTADO');
-        $idFinal   = DB::table('estado_proyecto')->where('NOMBRE_ESTADO','Finalizado')->value('ID_ESTADO');
+        // En desarrollo
+        $totalEnCurso = Proyecto::join('estado_proyecto', 'estado_proyecto.ID_ESTADO', '=', 'proyecto.ID_ESTADO')
+            ->where('estado_proyecto.NOMBRE_ESTADO', 'EN DESARROLLO')
+            ->count();
 
-        $totalEnCurso     = $idEnCurso ? (int) Proyecto::where('ID_ESTADO', $idEnCurso)->count() : 0;
-        $totalFinalizados = $idFinal   ? (int) Proyecto::where('ID_ESTADO', $idFinal)->count()   : 0;
+        // Publicados (por estado PUBLICADO)
+        $totalFinalizados = Proyecto::join('estado_proyecto', 'estado_proyecto.ID_ESTADO', '=', 'proyecto.ID_ESTADO')
+            ->where('estado_proyecto.NOMBRE_ESTADO', 'PUBLICADO')
+            ->count();
 
-        // “Publicados”: proyectos que tienen al menos un registro en proyecto_revista
-        $totalPublicados = (int) Proyecto::whereExists(function ($q) {
+        // SUSTENTADO (ESTO ES LO QUE QUIERES EN LA TARJETA)
+        $totalSustentados = Proyecto::join('estado_proyecto', 'estado_proyecto.ID_ESTADO', '=', 'proyecto.ID_ESTADO')
+            ->where('estado_proyecto.NOMBRE_ESTADO', 'SUSTENTADO')
+            ->count();
+
+        // Si quieres mantener "Publicados" como proyectos con revista:
+        $totalPublicados = Proyecto::whereExists(function ($q) {
             $q->select(DB::raw(1))
-              ->from('proyecto_revista')
-              ->whereColumn('proyecto_revista.ID_PROYECTO', 'proyecto.ID_PROYECTO');
+                ->from('proyecto_revista')
+                ->whereColumn('proyecto_revista.ID_PROYECTO', 'proyecto.ID_PROYECTO');
         })->count();
+
 
         // ========= Gráfico: Publicaciones por año (ANIO) =========
         $porAnio = Proyecto::select('ANIO', DB::raw('COUNT(*) as total'))
             ->groupBy('ANIO')->orderBy('ANIO')->get();
 
-        $porAnioLabels = $porAnio->pluck('ANIO')->map(fn($v)=>(string)$v)->all();
-        $porAnioData   = $porAnio->pluck('total')->map(fn($v)=>(int)$v)->all();
+        $porAnioLabels = $porAnio->pluck('ANIO')->map(fn($v) => (string)$v)->all();
+        $porAnioData   = $porAnio->pluck('total')->map(fn($v) => (int)$v)->all();
 
         // ========= Gráfico: Publicaciones por estado =========
         $porEstado = Proyecto::select('estado_proyecto.NOMBRE_ESTADO as nombre', DB::raw('COUNT(*) as total'))
-            ->join('estado_proyecto','estado_proyecto.ID_ESTADO','=','proyecto.ID_ESTADO')
+            ->join('estado_proyecto', 'estado_proyecto.ID_ESTADO', '=', 'proyecto.ID_ESTADO')
             ->groupBy('estado_proyecto.NOMBRE_ESTADO')
             ->orderByDesc('total')
             ->get();
 
-        $porEstadoLabels = $porEstado->pluck('nombre')->map(fn($v)=>(string)$v)->all();
-        $porEstadoData   = $porEstado->pluck('total')->map(fn($v)=>(int)$v)->all();
+        $porEstadoLabels = $porEstado->pluck('nombre')->map(fn($v) => (string)$v)->all();
+        $porEstadoData   = $porEstado->pluck('total')->map(fn($v) => (int)$v)->all();
 
         // ========= Gráfico: Top 7 áreas de investigación =========
         $porArea = Proyecto::select('area_investigacion.NOMBRE_AREA as nombre', DB::raw('COUNT(*) as total'))
-            ->join('area_investigacion','area_investigacion.ID_AREA','=','proyecto.ID_AREA')
+            ->join('area_investigacion', 'area_investigacion.ID_AREA', '=', 'proyecto.ID_AREA')
             ->groupBy('area_investigacion.NOMBRE_AREA')
             ->orderByDesc('total')->limit(7)->get();
 
-        $porAreaLabels = $porArea->pluck('nombre')->map(fn($v)=>(string)$v)->all();
-        $porAreaData   = $porArea->pluck('total')->map(fn($v)=>(int)$v)->all();
+        $porAreaLabels = $porArea->pluck('nombre')->map(fn($v) => (string)$v)->all();
+        $porAreaData   = $porArea->pluck('total')->map(fn($v) => (int)$v)->all();
 
         // ========= Gráfico: Distribución por TIPO DE PROYECTO =========
         // Usa catálogo tipos_proyecto.ID_TIPO → proyecto.ID_TIPO
-        $porTipo = Proyecto::select(DB::raw('COALESCE(tipos_proyecto.NOMBRE_TIPO, "Sin tipo") as nombre'),
-                                    DB::raw('COUNT(*) as total'))
-            ->leftJoin('tipos_proyecto','tipos_proyecto.ID_TIPO','=','proyecto.ID_TIPO')
+        $porTipo = Proyecto::select(
+            DB::raw('COALESCE(tipos_proyecto.NOMBRE_TIPO, "Sin tipo") as nombre'),
+            DB::raw('COUNT(*) as total')
+        )
+            ->leftJoin('tipos_proyecto', 'tipos_proyecto.ID_TIPO', '=', 'proyecto.ID_TIPO')
             ->groupBy('nombre')
             ->orderByDesc('total')
             ->get();
 
-        $porTipoLabels = $porTipo->pluck('nombre')->map(fn($v)=>(string)$v)->all();
-        $porTipoData   = $porTipo->pluck('total')->map(fn($v)=>(int)$v)->all();
+        $porTipoLabels = $porTipo->pluck('nombre')->map(fn($v) => (string)$v)->all();
+        $porTipoData   = $porTipo->pluck('total')->map(fn($v) => (int)$v)->all();
 
         // ========= Gráfico: Publicaciones por mes (últimos 12) =========
         // Basado en FECHA_INICIO; puedes cambiar a FECHA_FIN si te conviene.
@@ -77,7 +88,7 @@ class PublicacionDashboardController extends Controller
             ->whereNotNull('FECHA_INICIO')
             ->whereBetween('FECHA_INICIO', [$inicio, $fin])
             ->groupBy('ym')->orderBy('ym')
-            ->pluck('total','ym');  // mapa ym => total
+            ->pluck('total', 'ym');  // mapa ym => total
 
         $mesLabels = [];
         $mesData   = [];
@@ -88,25 +99,37 @@ class PublicacionDashboardController extends Controller
         }
 
         // ========= Gráfico: Top 5 autores =========
-        $topAutores = Proyecto::select('investigador.ID_INVESTIGADOR', DB::raw('COUNT(*) as total'),
-                                DB::raw("CONCAT(persona.NOMBRES,' ',persona.APELLIDOS) as autor"))
-            ->join('investigador','investigador.ID_INVESTIGADOR','=','proyecto.ID_AUTOR')
-            ->join('persona','persona.ID_PERSONA','=','investigador.ID_PERSONA')
-            ->groupBy('investigador.ID_INVESTIGADOR','persona.NOMBRES','persona.APELLIDOS')
+        $topAutores = Proyecto::select(
+            'investigador.ID_INVESTIGADOR',
+            DB::raw('COUNT(*) as total'),
+            DB::raw("CONCAT(persona.NOMBRES,' ',persona.APELLIDOS) as autor")
+        )
+            ->join('investigador', 'investigador.ID_INVESTIGADOR', '=', 'proyecto.ID_AUTOR')
+            ->join('persona', 'persona.ID_PERSONA', '=', 'investigador.ID_PERSONA')
+            ->groupBy('investigador.ID_INVESTIGADOR', 'persona.NOMBRES', 'persona.APELLIDOS')
             ->orderByDesc('total')->limit(5)->get();
 
-        $topAutoresLabels = $topAutores->pluck('autor')->map(fn($v)=>(string)$v)->all();
-        $topAutoresData   = $topAutores->pluck('total')->map(fn($v)=>(int)$v)->all();
+        $topAutoresLabels = $topAutores->pluck('autor')->map(fn($v) => (string)$v)->all();
+        $topAutoresData   = $topAutores->pluck('total')->map(fn($v) => (int)$v)->all();
 
-        // ========= Render =========
         return view('admin.publicaciones.index', compact(
-            'totalPublicaciones','totalEnCurso','totalFinalizados','totalPublicados',
-            'porAnioLabels','porAnioData',
-            'porEstadoLabels','porEstadoData',
-            'porAreaLabels','porAreaData',
-            'porTipoLabels','porTipoData',
-            'mesLabels','mesData',
-            'topAutoresLabels','topAutoresData'
-        )); 
+            'totalPublicaciones',
+            'totalEnCurso',
+            'totalFinalizados',
+            'totalPublicados',
+            'totalSustentados',
+            'porAnioLabels',
+            'porAnioData',
+            'porEstadoLabels',
+            'porEstadoData',
+            'porAreaLabels',
+            'porAreaData',
+            'porTipoLabels',
+            'porTipoData',
+            'mesLabels',
+            'mesData',
+            'topAutoresLabels',
+            'topAutoresData'
+        ));
     }
 }
