@@ -1,0 +1,703 @@
+/* =========================================================
+   VARIABLES INSTITUCIONALES (Diseño Premium Soberbio)
+   ========================================================= */
+:root {
+    --unasam-navy: #071444;
+    /* Azul marino oficial */
+    --unasam-navy-light: #0d2270;
+    /* Azul marino intermedio */
+    --unasam-navy-deep: #040c2b;
+    /* Azul marino muy oscuro */
+    --esat-blue: #2A7BCA;
+    /* Celeste oficial ESAT */
+    --esat-blue-light: rgba(42, 123, 202, 0.08);
+    --unasam-gold: #c69214;
+    /* Dorado institucional */
+    --unasam-gold-light: rgba(198, 146, 20, 0.08);
+    --academic-green: #10b981;
+    /* Verde académico moderno y sutil */
+    --academic-green-light: rgba(16, 185, 129, 0.08);
+    --bg-light: #f8fafc;
+    /* Gris/azul de fondo sumamente limpio */
+    --text-main: #1e293b;
+    /* Slate 800 */
+    --text-muted: #64748b;
+    /* Slate 500 */
+    --border-color: #e2e8f0;
+    /* Slate 200 */
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-main);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* =========================================================
+   CABECERA Y NAVBAR DE NAVEGACIÓN
+   ========================================================= */
+.navbar-custom {
+    background-color: #ffffff;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(7, 20, 68, 0.02) !important;
+    transition: all 0.3s ease;
+}
+
+.navbar-brand img {
+    transition: transform 0.3s ease;
+}
+
+.navbar-brand:hover img {
+    transform: scale(1.03);
+}
+
+.navbar-custom .nav-link {
+    color: var(--unasam-navy) !important;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem !important;
+    transition: color 0.25s ease;
+    position: relative;
+}
+
+.navbar-custom .nav-link:hover {
+    color: var(--esat-blue) !important;
+}
+
+/* Indicador sutil de página activa en el navbar */
+.navbar-custom .nav-item.active .nav-link,
+.navbar-custom .nav-link.active {
+    color: var(--esat-blue) !important;
+}
+
+/* Estilización premium de los menús desplegables (Dropdowns) */
+.navbar-custom .dropdown-menu {
+    border-radius: 12px !important;
+    margin-top: 10px;
+    padding: 8px 0;
+    box-shadow: 0 12px 30px rgba(7, 20, 68, 0.08) !important;
+    border: 1px solid var(--border-color) !important;
+    animation: dropdownFadeIn 0.25s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.navbar-custom .dropdown-item {
+    font-size: 0.85rem;
+    color: #475569;
+    padding: 10px 20px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.navbar-custom .dropdown-item:hover {
+    background-color: var(--bg-light) !important;
+    color: var(--esat-blue) !important;
+    padding-left: 24px;
+    /* Pequeño desplazamiento sutil e interactivo */
+}
+
+/* =========================================================
+   HERO BANNER CON IMÁGENES EN DIFUMINADO Y SOPORTE TEXTO
+   ========================================================= */
+.hero-carousel {
+    margin-bottom: 0;
+    background-color: var(--unasam-navy-deep);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-carousel .carousel-item {
+    background-size: cover;
+    background-position: center;
+    color: white;
+    padding: 100px 0 120px 0;
+    text-align: center;
+    min-height: 420px;
+    /* Gradiente sofisticado: más oscuro en la base para dar legibilidad, más claro en el centro/arriba */
+    background-image: linear-gradient(180deg, rgba(4, 12, 43, 0.75) 0%, rgba(4, 12, 43, 0.85) 100%);
+    transition: opacity 1.0s ease-in-out !important;
+}
+
+/* Sincroniza el tiempo de transición del carrusel y evita que Bootstrap corte la salida a los 0.6s */
+.hero-carousel.carousel-fade .active.carousel-item-left,
+.hero-carousel.carousel-fade .active.carousel-item-right {
+    transition: opacity 0s 1.0s !important;
+}
+
+.hero-logo {
+    max-height: 120px;
+    margin-bottom: 1.5rem;
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.35));
+    transition: transform 0.5s ease;
+}
+
+.hero-carousel h1 {
+    font-weight: 800;
+    font-size: 2.8rem;
+    letter-spacing: -0.5px;
+    margin-bottom: 0.8rem;
+    text-shadow: 0 2px 8px rgba(4, 12, 43, 0.6);
+}
+
+.hero-carousel p.lead {
+    font-size: 1.25rem;
+    font-weight: 400;
+    opacity: 0.9;
+    max-width: 800px;
+    margin: 0 auto;
+    text-shadow: 0 2px 6px rgba(4, 12, 43, 0.5);
+}
+
+/* Sincronización premium de entrada y salida del texto */
+.hero-carousel .carousel-item .container {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 1.0s ease-in-out, transform 1.0s ease-in-out;
+}
+
+.hero-carousel .carousel-item.active .container {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* =========================================================
+   BUSCADOR FLOTANTE Y ELEMENTOS DE CONTROL
+   ========================================================= */
+.search-box {
+    background: #ffffff;
+    padding: 24px 30px;
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 15px 35px -10px rgba(7, 20, 68, 0.1) !important;
+    margin-top: -55px;
+    position: relative;
+    z-index: 20;
+}
+
+.search-box .input-group {
+    background-color: #ffffff;
+    border-radius: 8px;
+}
+
+.search-box .input-group-text {
+    border-color: #cbd5e1;
+    color: var(--text-muted);
+}
+
+.search-box .form-control {
+    height: 50px;
+    border-color: #cbd5e1;
+    font-size: 0.95rem;
+    color: var(--text-main);
+}
+
+.search-box .form-control:focus {
+    border-color: var(--esat-blue) !important;
+    box-shadow: 0 0 0 4px rgba(42, 123, 202, 0.15) !important;
+}
+
+/* Botones con estilo institucional limpio */
+.btn {
+    border-radius: 8px !important;
+    border: none !important;
+    font-weight: 600 !important;
+    padding: 0.6rem 1.5rem;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-shadow: 0 2px 4px rgba(7, 20, 68, 0.04) !important;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(42, 123, 202, 0.2) !important;
+    opacity: 0.98;
+}
+
+.btn-primary {
+    background-color: var(--esat-blue) !important;
+    color: #ffffff !important;
+}
+
+.btn-primary:hover {
+    background-color: #2267ab !important;
+}
+
+/* =========================================================
+   VITRINA DE INVESTIGACIONES RECIENTES (repoCarousel)
+   ========================================================= */
+.card-custom {
+    border-radius: 14px !important;
+    border: 1px solid var(--border-color) !important;
+    background: #ffffff;
+    box-shadow: 0 4px 15px rgba(7, 20, 68, 0.02) !important;
+    border-left: 4px solid var(--unasam-navy) !important;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.card-custom:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(7, 20, 68, 0.05) !important;
+}
+
+/* Icono de publicación personalizado en círculo */
+.recent-pub-icon-wrapper {
+    width: 75px;
+    height: 75px;
+    border-radius: 50%;
+    background-color: var(--esat-blue-light);
+    color: var(--esat-blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    transition: all 0.3s ease;
+}
+
+.card-custom:hover .recent-pub-icon-wrapper {
+    background-color: var(--unasam-navy);
+    color: #ffffff;
+    transform: scale(1.05);
+}
+
+.card-custom .badge {
+    font-size: 0.75rem;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    background-color: var(--esat-blue-light) !important;
+    color: var(--esat-blue) !important;
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.carousel-control-prev:hover,
+.carousel-control-next:hover {
+    opacity: 1;
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    background-color: var(--unasam-navy) !important;
+    border-radius: 50%;
+    background-size: 50% 50%;
+    width: 40px;
+    height: 40px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* =========================================================
+   TARJETAS KPI (Diseño Académico Sobrio y Elegante)
+   ========================================================= */
+.kpi-card {
+    background: #ffffff !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 14px !important;
+    color: var(--text-main) !important;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    height: 100%;
+    box-shadow: 0 4px 12px rgba(7, 20, 68, 0.02) !important;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Asignar bordes de acento izquierdo institucional */
+.kpi-card.bg-blue-1 {
+    border-left: 4px solid var(--unasam-navy) !important;
+}
+
+.kpi-card.bg-green {
+    border-left: 4px solid var(--esat-blue) !important;
+}
+
+.kpi-card.bg-blue-2 {
+    border-left: 4px solid var(--unasam-gold) !important;
+}
+
+.kpi-card.bg-yellow {
+    border-left: 4px solid var(--academic-green) !important;
+}
+
+.kpi-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 25px rgba(7, 20, 68, 0.06) !important;
+}
+
+.kpi-card h3 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--unasam-navy);
+    margin-bottom: 4px;
+    position: relative;
+    z-index: 2;
+}
+
+.kpi-card p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0;
+    position: relative;
+    z-index: 2;
+}
+
+/* Íconos transparentes adaptados cromáticamente */
+.kpi-card .icon {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 3.8rem;
+    z-index: 1;
+    transition: all 0.3s ease !important;
+}
+
+.kpi-card.bg-blue-1 .icon {
+    color: var(--unasam-navy-light) !important;
+    opacity: 0.06;
+}
+
+.kpi-card.bg-green .icon {
+    color: var(--esat-blue) !important;
+    opacity: 0.08;
+}
+
+.kpi-card.bg-blue-2 .icon {
+    color: var(--unasam-gold) !important;
+    opacity: 0.08;
+}
+
+.kpi-card.bg-yellow .icon {
+    color: var(--academic-green) !important;
+    opacity: 0.08;
+}
+
+.kpi-card:hover .icon {
+    transform: translateY(-50%) scale(1.08) rotate(5deg) !important;
+    opacity: 0.12 !important;
+}
+
+/* =========================================================
+   PIE DE PÁGINA (FOOTER) ACADÉMICO UNIFICADO
+   ========================================================= */
+footer {
+    margin-top: auto;
+}
+
+/* Barra superior unificada en azul intermedio */
+.footer-top {
+    background-color: var(--unasam-navy-light);
+    color: #ffffff;
+    padding: 16px 0;
+    font-size: 0.88rem;
+    font-weight: 500;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.footer-top strong {
+    color: #ffffff;
+    opacity: 0.85;
+}
+
+/* Fondo principal unificado en azul marino profundo */
+.footer-main {
+    background-color: var(--unasam-navy-deep);
+    color: #94a3b8;
+    padding: 60px 0 40px 0;
+}
+
+.footer-main h5 {
+    color: #ffffff;
+    font-weight: 700;
+    margin-bottom: 22px;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    position: relative;
+}
+
+.footer-main h5::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -6px;
+    width: 30px;
+    height: 2px;
+    background-color: var(--unasam-gold);
+}
+
+.footer-main p {
+    font-size: 0.88rem;
+    line-height: 1.6;
+}
+
+.footer-main ul {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-main ul li {
+    margin-bottom: 12px;
+}
+
+.footer-main ul li a {
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.88rem;
+    transition: all 0.2s ease;
+}
+
+.footer-main ul li a:hover {
+    color: #ffffff;
+    padding-left: 4px;
+}
+
+.footer-main i {
+    margin-right: 8px;
+    color: var(--unasam-gold);
+}
+
+/* =========================================================
+   DISEÑO ADAPTATIVO (RESPONSIVE DESIGN)
+   ========================================================= */
+@media (max-width: 1199.98px) {
+    .navbar-collapse {
+        background-color: #ffffff;
+        padding: 15px 20px;
+        border-radius: 12px;
+        margin-top: 10px;
+        box-shadow: 0 8px 30px rgba(7, 20, 68, 0.08);
+        border: 1px solid var(--border-color);
+    }
+
+    .navbar-custom .dropdown-menu {
+        box-shadow: none !important;
+        background-color: var(--bg-light);
+        border: none !important;
+        padding-left: 10px;
+    }
+
+    .navbar-custom .nav-link {
+        padding: 0.6rem 0 !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-carousel .carousel-item {
+        padding: 60px 0 80px 0;
+        min-height: 340px;
+    }
+
+    .hero-carousel h1 {
+        font-size: 2rem;
+    }
+
+    .hero-carousel p.lead {
+        font-size: 1rem;
+    }
+
+    .search-box {
+        padding: 20px;
+        margin-top: -40px;
+    }
+
+    .kpi-card {
+        padding: 20px;
+    }
+
+    .kpi-card h3 {
+        font-size: 1.8rem;
+    }
+}
+
+/* =========================================================
+   ENLACE "VER DETALLE" EN EL CARRUSEL DE NOVEDADES
+   ========================================================= */
+.pub-ver-detalle {
+    display: inline-block;
+    color: var(--esat-blue);
+    font-weight: 600;
+    font-size: 0.88rem;
+    transition: all 0.2s ease;
+}
+
+.pub-ver-detalle i {
+    transition: transform 0.2s ease;
+}
+
+.card-custom a:hover .pub-ver-detalle {
+    color: var(--unasam-navy);
+}
+
+.card-custom a:hover .pub-ver-detalle i {
+    transform: translateX(4px);
+}
+
+/* Hover para filas de resultados de búsqueda */
+a.result-row:hover {
+    background-color: var(--bg-light) !important;
+}
+
+/* =========================================================
+   PÁGINA DE DETALLE DE PUBLICACIÓN (show.blade.php)
+   ========================================================= */
+
+/* Migas de pan */
+.breadcrumb-item a {
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.breadcrumb-item a:hover {
+    color: var(--unasam-navy) !important;
+    text-decoration: none;
+}
+
+/* Badges de la publicación */
+.pub-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.pub-badge--navy {
+    background-color: rgba(7, 20, 68, 0.08);
+    color: var(--unasam-navy);
+}
+
+.pub-badge--blue {
+    background-color: var(--esat-blue-light);
+    color: var(--esat-blue);
+}
+
+.pub-badge--gold {
+    background-color: var(--unasam-gold-light);
+    color: var(--unasam-gold);
+}
+
+/* Tarjetas laterales (Autores, Datos del Proyecto) */
+.pub-sidebar-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(7, 20, 68, 0.02);
+}
+
+.pub-sidebar-card__header {
+    background-color: var(--unasam-navy);
+    color: #ffffff;
+    padding: 14px 20px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.pub-sidebar-card__body {
+    padding: 20px;
+}
+
+/* Avatar circular de autores */
+.pub-avatar {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    border-radius: 50%;
+    background-color: var(--esat-blue);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.pub-avatar--small {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    font-size: 0.85rem;
+    background-color: var(--esat-blue-light);
+    color: var(--esat-blue);
+}
+
+/* Filas de datos del proyecto */
+.pub-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.pub-detail-row:last-child {
+    border-bottom: none;
+}
+
+.pub-detail-row__label {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.pub-detail-row__label i {
+    color: var(--esat-blue);
+    width: 18px;
+    text-align: center;
+}
+
+.pub-detail-row__value {
+    color: var(--text-main);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-align: right;
+}
+
+/* Tarjeta principal de contenido (Resumen) */
+.pub-content-card {
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(7, 20, 68, 0.02);
+    height: 100%;
+}
+
+.pub-content-card__header {
+    background-color: var(--bg-light);
+    border-bottom: 1px solid var(--border-color);
+    padding: 14px 24px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--unasam-navy);
+    letter-spacing: 0.3px;
+}
+
+.pub-content-card__body {
+    padding: 28px;
+}

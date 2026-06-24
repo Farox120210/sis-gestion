@@ -22,31 +22,97 @@
     <body class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] flex p-6 lg:p-8 items-center lg:justify-center min-h-screen flex-col">
         <header class="w-full lg:max-w-4xl max-w-[335px] text-sm mb-6 not-has-[nav]:hidden">
             @if (Route::has('login'))
-                <nav class="flex items-center justify-end gap-4">
-                    @auth
-                        <a
-                            href="{{ url('/dashboard') }}"
-                            class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] border-[#19140035] hover:border-[#1915014a] border text-[#1b1b18] dark:border-[#3E3E3A] dark:hover:border-[#62605b] rounded-sm text-sm leading-normal"
-                        >
-                            Dashboard
-                        </a>
-                    @else
-                        <a
-                            href="{{ route('login') }}"
-                            class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] text-[#1b1b18] border border-transparent hover:border-[#19140035] dark:hover:border-[#3E3E3A] rounded-sm text-sm leading-normal"
-                        >
-                            Log in
-                        </a>
+                {{-- BARRA SUPERIOR DE NAVEGACIÓN Y FILTROS INTEGRADOS --}}
+    <nav class="navbar navbar-expand-xl navbar-custom shadow-sm py-2 sticky-top">
+        <div class="container-fluid px-4">
+            {{-- Logo y Nombre de la Institución --}}
+            <a class="navbar-brand d-flex align-items-center" href="{{ route('inicio') }}">
+                <img src="{{ asset('dist/img/LOGO_UNASAM-removebg-preview.png') }}" alt="Logo ESAT" style="height: 48px; margin-right: 12px; object-fit: contain;">
+                <h5 class="mb-0 font-weight-bold" style="color: var(--unasam-navy); letter-spacing: -0.5px;">ESAT<span style="color: var(--esat-blue);">-</span>UNASAM</h5>
+            </a>
+            
+            {{-- Botón de colapso para pantallas móviles --}}
+            <button class="navbar-toggler border-0" type="button" data-toggle="collapse" data-target="#topBarNavbar" aria-controls="topBarNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="fas fa-bars" style="color: var(--unasam-navy); font-size: 1.3rem;"></i>
+            </button>
 
-                        @if (Route::has('register'))
-                            <a
-                                href="{{ route('register') }}"
-                                class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] border-[#19140035] hover:border-[#1915014a] border text-[#1b1b18] dark:border-[#3E3E3A] dark:hover:border-[#62605b] rounded-sm text-sm leading-normal">
-                                Register
-                            </a>
-                        @endif
-                    @endauth
-                </nav>
+            {{-- Menús de Categorías Desplegables --}}
+            <div class="collapse navbar-collapse" id="topBarNavbar">
+                <ul class="navbar-nav mx-auto text-uppercase" style="font-size: 0.82rem; letter-spacing: 0.5px;">
+                    
+                    {{-- 1. DROPDOWN: TIPO DE INVESTIGACIÓN --}}
+                    <li class="nav-item dropdown px-2">
+                        <a class="nav-link dropdown-toggle" href="#" id="dropTipo" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-graduation-cap text-muted mr-1"></i> Tipo
+                        </a>
+                        <div class="dropdown-menu border-0 shadow-sm animate-fade-in" aria-labelledby="dropTipo">
+                            @foreach($menuTipos as $t)
+                                <a class="dropdown-item" href="{{ route('inicio', ['tipo' => $t->ID_TIPO]) }}">{{ $t->NOMBRE_TIPO }}</a>
+                            @endforeach
+                        </div>
+                    </li>
+
+                    {{-- 2. DROPDOWN: MATERIA / ÁREA DE INVESTIGACIÓN --}}
+                    <li class="nav-item dropdown px-2">
+                        <a class="nav-link dropdown-toggle" href="#" id="dropArea" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-microscope text-muted mr-1"></i> Materia
+                        </a>
+                        <div class="dropdown-menu border-0 shadow-sm" aria-labelledby="dropArea">
+                            @foreach($menuAreas as $a)
+                                <a class="dropdown-item" href="{{ route('inicio', ['area' => $a->ID_AREA]) }}">{{ $a->NOMBRE_AREA }}</a>
+                            @endforeach
+                        </div>
+                    </li>
+
+                    {{-- 3. DROPDOWN: GRUPOS DE INVESTIGACIÓN --}}
+                    <li class="nav-item dropdown px-2">
+                        <a class="nav-link dropdown-toggle" href="#" id="dropGrupo" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-users text-muted mr-1"></i> Grupos
+                        </a>
+                        <div class="dropdown-menu border-0 shadow-sm" aria-labelledby="dropGrupo">
+                            @foreach($menuGrupos as $g)
+                                <a class="dropdown-item" href="{{ route('inicio', ['grupo' => $g->ID_GRUPO]) }}">{{ $g->NOMBRE_GRUPO }}</a>
+                            @endforeach
+                        </div>
+                    </li>
+
+                    {{-- 4. DROPDOWN: AUTORES --}}
+                    <li class="nav-item dropdown px-2">
+                        <a class="nav-link dropdown-toggle" href="#" id="dropAutor" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-user-tie text-muted mr-1"></i> Autores
+                        </a>
+                        <div class="dropdown-menu border-0 shadow-sm" aria-labelledby="dropAutor" style="max-height: 280px; overflow-y: auto;">
+                            @forelse($menuAutores as $aut)
+                                <a class="dropdown-item text-capitalize" href="{{ route('inicio', ['autor' => $aut->id]) }}">{{ strtolower($aut->APELLIDOS . ', ' . $aut->NOMBRES) }}</a>
+                            @empty
+                                <span class="dropdown-item text-muted disabled">No hay autores públicos</span>
+                            @endforelse
+                        </div>
+                    </li>
+
+                    {{-- 5. DROPDOWN: FECHAS / AÑOS --}}
+                    <li class="nav-item dropdown px-2">
+                        <a class="nav-link dropdown-toggle" href="#" id="dropAnio" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-calendar-alt text-muted mr-1"></i> Cronología
+                        </a>
+                        <div class="dropdown-menu border-0 shadow-sm" aria-labelledby="dropAnio">
+                            @foreach($menuAnios as $an)
+                                <a class="dropdown-item text-center font-weight-bold" href="{{ route('inicio', ['anio' => $an->ANIO]) }}">{{ $an->ANIO }}</a>
+                            @endforeach
+                        </div>
+                    </li>
+
+                </ul>
+
+                {{-- Botón de Ingreso al Sistema Privado --}}
+                <div class="form-inline mt-2 mt-xl-0">
+                    <a class="btn btn-primary font-weight-bold text-white px-4 py-2" href="{{ route('login') }}" style="border-radius: 6px; font-size: 0.85rem;">
+                        <i class="fas fa-sign-in-alt mr-2"></i> Acceso Interno
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
             @endif
         </header>
         <div class="flex items-center justify-center w-full transition-opacity opacity-100 duration-750 lg:grow starting:opacity-0">

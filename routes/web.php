@@ -1,8 +1,8 @@
 <?php
-
+//controladores
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
-
+use App\Http\Controllers\WelcomeController; 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\PublicacionController;
 use App\Http\Controllers\UsuarioController;
@@ -11,6 +11,20 @@ use App\Http\Controllers\Admin\PublicacionDashboardController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ExtractArticleController;
 
+// --------------------------------------------------
+// REPOSITORIO PÚBLICO (No requiere login)
+// --------------------------------------------------
+
+// Esta es la ruta que mostrará tu diseño del repositorio al entrar a http://localhost/sis-gestion/public/
+Route::get('/', [WelcomeController::class, 'index'])->name('inicio');
+Route::get('/autores', [\App\Http\Controllers\WelcomeController::class, 'autores'])->name('public.autores');
+Route::get('/publicacion/{id}', [WelcomeController::class, 'showPublicacion'])->name('public.publicacion.show');
+Route::get('public/publicaciones/{id}/file/{file}', [WelcomeController::class, 'verArchivoPublico'])
+    ->where('file', '.*')
+    ->name('public.publicaciones.ver-archivo');
+Route::get('public/publicaciones/{id}/download/{file}', [WelcomeController::class, 'descargarArchivoPublico'])
+    ->where('file', '.*')
+    ->name('public.publicaciones.descargar-archivo');
 // --------------------------------------------------
 // AUTH
 // --------------------------------------------------
@@ -26,9 +40,17 @@ Route::pattern('id', '[0-9]+');
 // ADMIN - DASHBOARD PRINCIPAL
 // --------------------------------------------------
 
-Route::get('', [AdminController::class, 'index'])
+// Movimos el panel de control a /admin/dashboard
+Route::get('/admin/dashboard', [AdminController::class, 'index'])
     ->name('admin.index')
-    ->middleware('auth');
+    ->middleware('auth');   
+    
+
+    // Cuando Laravel intente mandarte a /home después del login, 
+// lo interceptamos y lo enviamos a tu panel de administrador
+Route::get('/home', function () {
+    return redirect()->route('admin.index');
+});
 
 // --------------------------------------------------
 // USUARIOS
@@ -62,6 +84,8 @@ Route::delete('/usuarios/{id}', [UsuarioController::class, 'destroy'])
     ->name('usuarios.destroy')
     ->middleware('auth');
 
+    
+
 // --------------------------------------------------
 // ADMIN (prefix: /admin)
 // --------------------------------------------------
@@ -73,9 +97,12 @@ Route::middleware('auth')->prefix('admin')->group(function () {
         ->names('publicaciones')
         ->parameters(['publicaciones' => 'id']);   // /admin/publicaciones/{id}
 
-    // EXPORTAR PUBLICACIONES A EXCEL
-    Route::get('publicaciones/export', [PublicacionController::class, 'export'])
-        ->name('publicaciones.export');
+    // EXPORTAR PUBLICACIONES A EXCEL Y PDF
+    Route::get('publicaciones/export/excel', [PublicacionController::class, 'exportExcel'])
+        ->name('publicaciones.export.excel');
+
+    Route::get('publicaciones/export/pdf', [PublicacionController::class, 'exportPdf'])
+        ->name('publicaciones.export.pdf');
 
     // BUSCADOR DE INVESTIGADORES PARA FORMULARIOS
     Route::get('api/investigadores/search', [PublicacionController::class, 'searchInvestigadores'])
@@ -108,4 +135,5 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     // EXTRACTOR DE ARTÍCULOS
     Route::post('extract-article', [ExtractArticleController::class, 'extract'])
         ->name('extract.article');
+        
 });

@@ -1,0 +1,180 @@
+/* Color institucional ESAT - UNASAM */
+:root {
+    --unasam-navy: #071444; /* El azul marino oscuro para el menú y barra superior */
+    --unasam-hover: #0a1c5c; /* Un tono un poco más claro para el efecto hover del menú */
+    --esat-blue: #2A7BCA; /* Mantenemos el celeste ESAT para el botón primario */
+}
+
+/* 1. Cambiar el fondo de la Barra Superior (Navbar) */
+.main-header {
+    background-color: var(--unasam-navy) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+/* Color de los íconos/texto en la barra superior */
+.main-header .navbar-nav .nav-link {
+    color: #ffffff !important;
+}
+
+/* 2. Cambiar el fondo de la Barra Lateral (Sidebar) */
+.main-sidebar {
+    background-color: var(--unasam-navy) !important;
+}
+
+/* 3. Área del Logo (esquina superior izquierda) */
+.brand-link {
+    background-color: var(--unasam-navy) !important;
+    color: #ffffff !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+.brand-link:hover {
+    color: #ffffff !important;
+}
+
+/* 4. Textos de los enlaces en el menú lateral */
+.nav-sidebar > .nav-item > .nav-link {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* 5. Efecto Hover y Enlace Activo en el menú lateral */
+.nav-sidebar > .nav-item > .nav-link.active,
+.nav-sidebar > .nav-item > .nav-link:hover {
+    background-color: var(--unasam-hover) !important;
+    color: #ffffff !important;
+    border-radius: 5px; /* Bordes un poco redondeados */
+}
+
+/* 6. Textos de los submenús (si tienes menús desplegables) */
+.nav-treeview > .nav-item > .nav-link {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+.nav-treeview > .nav-item > .nav-link.active,
+.nav-treeview > .nav-item > .nav-link:hover {
+    background-color: transparent !important;
+    color: #ffffff !important;
+}
+
+/* --- Refuerzo visual para tablas de datos --- */
+.table thead th {
+    background-color: #f4f6f9 !important; /* Gris muy clarito y elegante */
+    color: #495057 !important;            /* Texto oscuro para buen contraste */
+    border-bottom: 2px solid #dee2e6 !important;
+}
+
+/* Centrar el contenido de las celdas automáticamente (opcional) */
+.table td, .table th {
+    vertical-align: middle !important;
+}
+
+/* --- Estilo suave y moderno para los botones --- */
+.btn {
+    border-radius: 6px !important; /* Bordes redondeados y suaves */
+    border: none !important; /* Quita el borde tosco de Bootstrap */
+    font-weight: 500 !important; /* Texto un poco más nítido */
+    transition: all 0.2s ease-in-out !important; /* Animación fluida */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important; /* Sombra muy sutil */
+}
+
+/* Efecto al pasar el cursor (se levantan un poquito) */
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.12) !important;
+    opacity: 0.95;
+}
+
+/* Colores modernos (más planos y menos brillantes que los por defecto) */
+.btn-primary { background-color: var(--esat-blue) !important; color: #fff !important; }
+.btn-success { background-color: #10B981 !important; color: #fff !important; } /* Verde moderno */
+.btn-warning { background-color: #F59E0B !important; color: #fff !important; } /* Amarillo/Naranja suave */
+.btn-danger  { background-color: #EF4444 !important; color: #fff !important; } /* Rojo menos agresivo */
+
+/* Ajuste fino para los botones pequeños de tu tabla (btn-sm) */
+.btn-sm {
+    padding: 6px 12px !important;
+    font-size: 13px !important;
+    gap: 5px; /* Separación sutil entre el ícono y el texto */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+/* =========================================================
+   ESTILOS PARA INDICADORES (Small Boxes) Y TARJETAS (Cards)
+   ========================================================= */
+
+/* 1. Indicadores Superiores (Small Boxes) */
+.small-box {
+    border-radius: 12px !important; /* Esquinas más redondeadas */
+    border: none !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03) !important; /* Sombra suave */
+    transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+    overflow: hidden; /* Asegura que el ícono de fondo no se salga del borde redondeado */
+}
+
+/* Efecto de elevación al pasar el mouse */
+.small-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Modificamos los colores base por gradientes modernos */
+.small-box.bg-primary, .small-box.bg-info { 
+    background: linear-gradient(135deg, #3B82F6, #2563EB) !important; 
+    color: #ffffff !important; 
+}
+.small-box.bg-warning { 
+    background: linear-gradient(135deg, #FBBF24, #F59E0B) !important; 
+    color: #ffffff !important; /* Forzamos texto blanco para la caja amarilla */
+}
+.small-box.bg-warning .inner h3, .small-box.bg-warning .inner p {
+    color: #ffffff !important;
+}
+.small-box.bg-success { 
+    background: linear-gradient(135deg, #34D399, #10B981) !important; 
+    color: #ffffff !important; 
+}
+/* Para la cuarta caja (probablemente bg-teal, bg-cyan o bg-secondary) */
+.small-box.bg-teal, .small-box.bg-cyan, .small-box.bg-secondary { 
+    background: linear-gradient(135deg, #2DD4BF, #0D9488) !important; 
+    color: #ffffff !important; 
+}
+
+/* Suavizamos el ícono gigante del fondo */
+.small-box .icon > i {
+    color: rgba(255, 255, 255, 0.15) !important; /* Más transparente */
+    transition: transform 0.3s ease !important;
+}
+.small-box:hover .icon > i {
+    transform: scale(1.1) rotate(5deg) !important; /* Pequeña animación al pasar el mouse */
+}
+
+/* 2. Tarjetas Contenedoras (Cards de los gráficos) */
+.card {
+    border-radius: 12px !important;
+    border: 1px solid #E2E8F0 !important; /* Borde gris súper suave */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02) !important; /* Sombra mínima */
+    transition: box-shadow 0.3s ease !important;
+}
+
+.card:hover {
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Suavizar la cabecera de las tarjetas */
+.card-header {
+    background-color: #ffffff !important; /* Fondo blanco limpio */
+    border-bottom: 1px solid #E2E8F0 !important;
+    border-top-left-radius: 12px !important;
+    border-top-right-radius: 12px !important;
+    padding: 15px 20px !important;
+}
+
+/* Títulos de las tarjetas más elegantes */
+.card-title {
+    font-weight: 600 !important;
+    color: #2D3748 !important; /* Gris oscuro en lugar de negro puro */
+    font-size: 1.05rem !important;
+}
+
+/* Si usas card-outline (la línea de color arriba), la hacemos coincidir con el celeste ESAT */
+.card-primary.card-outline {
+    border-top: 3px solid var(--esat-blue) !important;
+}

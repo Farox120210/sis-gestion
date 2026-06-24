@@ -1,12 +1,16 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Exports\PublicacionesExport;
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PublicacionController extends Controller
 {
@@ -16,7 +20,7 @@ class PublicacionController extends Controller
     public function index(Request $request)
     {
         // El index no lleva candado porque queremos que todos (Lector, Publicador, Admin) puedan ver la lista.
-        
+
         $tipo     = $request->input('tipo');   // filtro por tipo de investigación (opcional)
         $busqueda = $request->input('q');      // filtro de texto general (opcional)
 
@@ -39,10 +43,10 @@ class PublicacionController extends Controller
         if (!empty($busqueda)) {
             $publicacionesQuery->where(function ($q) use ($busqueda) {
                 $q->where(DB::raw("CONCAT(per.NOMBRES, ' ', per.APELLIDOS)"), 'LIKE', '%' . $busqueda . '%')
-                  ->orWhere('g.NOMBRE_GRUPO', 'LIKE', '%' . $busqueda . '%')
-                  ->orWhere('a.NOMBRE_AREA', 'LIKE', '%' . $busqueda . '%')
-                  ->orWhere('p.TITULO', 'LIKE', '%' . $busqueda . '%')
-                  ->orWhere('r.NOMBRE_REVISTA', 'LIKE', '%' . $busqueda . '%');
+                    ->orWhere('g.NOMBRE_GRUPO', 'LIKE', '%' . $busqueda . '%')
+                    ->orWhere('a.NOMBRE_AREA', 'LIKE', '%' . $busqueda . '%')
+                    ->orWhere('p.TITULO', 'LIKE', '%' . $busqueda . '%')
+                    ->orWhere('r.NOMBRE_REVISTA', 'LIKE', '%' . $busqueda . '%');
             });
         }
 
@@ -55,6 +59,7 @@ class PublicacionController extends Controller
                 r.NOMBRE_REVISTA as revista,
                 pr.ANIO_PUBLICACION as anio_publicacion,
                 COALESCE(tp.NOMBRE_TIPO, "Sin tipo") as tipo,
+                p.KEYWORDS as keywords,
                 COALESCE(GROUP_CONCAT(DISTINCT CONCAT(per.NOMBRES, " ", per.APELLIDOS) SEPARATOR "; "), "—") as autores
             ')
             ->groupBy(
@@ -64,11 +69,12 @@ class PublicacionController extends Controller
                 'a.NOMBRE_AREA',
                 'r.NOMBRE_REVISTA',
                 'pr.ANIO_PUBLICACION',
-                'tp.NOMBRE_TIPO'
+                'tp.NOMBRE_TIPO',
+                'p.KEYWORDS'
             )
             ->orderByDesc('pr.ID_PROYECTO_REVISTA')
-            ->get();
-
+            ->paginate(10);
+            $publicaciones->appends($request->only(['tipo', 'q']));
         // 👉 ESTA es la variable que pide tu vista
         $tiposInvestigacion = DB::table('tipos_proyecto')
             ->whereNotNull('NOMBRE_TIPO')
@@ -146,6 +152,7 @@ class PublicacionController extends Controller
             'fecha_inicio'         => 'nullable|date',
             'fecha_fin'            => 'nullable|date|after_or_equal:fecha_inicio',
             'descripcion_proyecto' => 'nullable|string',
+            'keywords'             => 'nullable|string|max:500',
             'presupuesto'          => 'nullable|numeric|min:0',
             'id_area'              => 'required|integer|exists:area_investigacion,ID_AREA',
             'id_estado'            => 'required|integer|exists:estado_proyecto,ID_ESTADO',
@@ -185,6 +192,7 @@ class PublicacionController extends Controller
                 'ID_AREA'              => $request->id_area,
                 'ID_ESTADO'            => $request->id_estado,
                 'ID_TIPO'              => $request->id_tipo ?? null,
+                'KEYWORDS'             => $request->keywords,
             ]);
 
             if (!empty($request->id_grupo)) {
@@ -312,9 +320,9 @@ class PublicacionController extends Controller
             DB::commit();
 
             return redirect()
-                ->route('publicaciones.index')
-                ->with('ok', 'Publicación creada correctamente.');
-        } catch (\Throwable $e) {
+                ->route('publicaciones.show', $idPublicacion)
+                ->with('ok', 'Publicación creada correctamente.');}
+         catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Error al guardar la publicación', [
                 'msg'  => $e->getMessage(),
@@ -355,6 +363,7 @@ class PublicacionController extends Controller
                 'p.FECHA_INICIO as fecha_inicio',
                 'p.FECHA_FIN as fecha_fin',
                 'p.PRESUPUESTO as presupuesto',
+                'p.KEYWORDS as keywords',
 
                 'a.NOMBRE_AREA as area',
                 'est.NOMBRE_ESTADO as estado',
@@ -381,7 +390,8 @@ class PublicacionController extends Controller
             ->select([
                 'i.ID_INVESTIGADOR',
                 'pi.ROL_EN_PROYECTO',
-                'DB::raw("CONCAT(per.NOMBRES,\" \",per.APELLIDOS) as nombre")',
+                // 👇 Ahora Laravel sabrá que es una función y no el nombre de una columna
+                DB::raw("CONCAT(per.NOMBRES, ' ', per.APELLIDOS) as nombre")
             ])
             ->orderBy('per.APELLIDOS')
             ->get();
@@ -451,6 +461,7 @@ class PublicacionController extends Controller
                 'p.ID_AUTOR as id_autor',
                 'p.ID_GRUPO as id_grupo',
                 'p.ID_TIPO as id_tipo',
+                'p.KEYWORDS as keywords',
 
                 DB::raw('COALESCE(g.NOMBRE_GRUPO,"—") as grupo'),
                 'r.NOMBRE_REVISTA as revista',
@@ -523,6 +534,7 @@ class PublicacionController extends Controller
             'fecha_inicio'         => ['nullable', 'date'],
             'fecha_fin'            => ['nullable', 'date', 'after_or_equal:fecha_inicio'],
             'descripcion_proyecto' => ['nullable', 'string'],
+            'keywords'             => ['nullable', 'string', 'max:500'],
             'presupuesto'          => ['nullable', 'numeric'],
             'id_area'              => ['required', 'integer'],
             'id_estado'            => ['required', 'integer'],
@@ -573,6 +585,7 @@ class PublicacionController extends Controller
                     'ID_AREA'              => $data['id_area'],
                     'ID_ESTADO'            => $data['id_estado'],
                     'ID_TIPO'              => $data['id_tipo'] ?? null,
+                    'KEYWORDS'             => $data['keywords'] ?? null,
                 ]);
 
             DB::table('proyecto_revista')
@@ -665,7 +678,7 @@ class PublicacionController extends Controller
             DB::commit();
 
             return redirect()
-                ->route('publicaciones.index')
+                ->route('publicaciones.show', $id)
                 ->with('ok', 'Publicación actualizada correctamente.');
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -786,4 +799,110 @@ class PublicacionController extends Controller
         }
     }
 
+    /**
+     * Exporta las publicaciones a un archivo Excel institucional respetando los filtros
+     */
+    public function exportExcel(Request $request)
+    {
+        if (auth()->user()->rol !== 'super_admin') {
+            abort(403, 'Acción no autorizada. Solo los administradores pueden generar reportes.');
+        }
+
+        $tipo = $request->input('tipo');
+        $q    = $request->input('q');
+
+        Log::info('Generando reporte Excel de publicaciones', [
+            'tipo' => $tipo,
+            'q'    => $q,
+            'user' => auth()->user()->name ?? 'Usuario'
+        ]);
+
+        return Excel::download(
+            new PublicacionesExport($tipo, $q),
+            'reporte_publicaciones_' . date('Ymd_His') . '.xlsx'
+        );
+    }
+
+    /**
+     * Exporta las publicaciones a un archivo PDF institucional respetando los filtros
+     */
+    public function exportPdf(Request $request)
+    {
+        if (auth()->user()->rol !== 'super_admin') {
+            abort(403, 'Acción no autorizada. Solo los administradores pueden generar reportes.');
+        }
+
+        $tipo     = $request->input('tipo');
+        $busqueda = $request->input('q');
+
+        Log::info('Generando reporte PDF de publicaciones', [
+            'tipo' => $tipo,
+            'q'    => $busqueda,
+            'user' => auth()->user()->name ?? 'Usuario'
+        ]);
+
+        $publicacionesQuery = DB::table('proyecto_revista as pr')
+            ->join('proyecto as p', 'p.ID_PROYECTO', '=', 'pr.ID_PROYECTO')
+            ->join('revistas as r', 'r.ID_REVISTA', '=', 'pr.ID_REVISTA')
+            ->leftJoin('area_investigacion as a', 'a.ID_AREA', '=', 'p.ID_AREA')
+            ->leftJoin('grupos_investigacion as g', 'g.ID_GRUPO', '=', 'p.ID_GRUPO')
+            ->leftJoin('proyecto_investigador as pi', 'pi.ID_PROYECTO', '=', 'p.ID_PROYECTO')
+            ->leftJoin('investigador as i', 'i.ID_INVESTIGADOR', '=', 'pi.ID_INVESTIGADOR')
+            ->leftJoin('persona as per', 'per.ID_PERSONA', '=', 'i.ID_PERSONA')
+            ->leftJoin('tipos_proyecto as tp', 'tp.ID_TIPO', '=', 'p.ID_TIPO');
+
+        if (!empty($tipo)) {
+            $publicacionesQuery->where('tp.NOMBRE_TIPO', $tipo);
+        }
+
+        if (!empty($busqueda)) {
+            $publicacionesQuery->where(function ($q) use ($busqueda) {
+                $q->where(DB::raw("CONCAT(per.NOMBRES, ' ', per.APELLIDOS)"), 'LIKE', '%' . $busqueda . '%')
+                    ->orWhere('g.NOMBRE_GRUPO', 'LIKE', '%' . $busqueda . '%')
+                    ->orWhere('a.NOMBRE_AREA', 'LIKE', '%' . $busqueda . '%')
+                    ->orWhere('p.TITULO', 'LIKE', '%' . $busqueda . '%')
+                    ->orWhere('r.NOMBRE_REVISTA', 'LIKE', '%' . $busqueda . '%');
+            });
+        }
+
+        $publicaciones = $publicacionesQuery
+            ->selectRaw('
+                p.TITULO as titulo,
+                COALESCE(GROUP_CONCAT(DISTINCT CONCAT(per.NOMBRES, " ", per.APELLIDOS) SEPARATOR "; "), "—") as autores,
+                r.NOMBRE_REVISTA as revista,
+                pr.ANIO_PUBLICACION as anio_publicacion,
+                COALESCE(a.NOMBRE_AREA, "—") as area,
+                COALESCE(g.NOMBRE_GRUPO, "—") as grupo,
+                COALESCE(tp.NOMBRE_TIPO, "Sin tipo") as tipo,
+                p.KEYWORDS as keywords
+            ')
+            ->groupBy(
+                'pr.ID_PROYECTO_REVISTA',
+                'p.TITULO',
+                'g.NOMBRE_GRUPO',
+                'a.NOMBRE_AREA',
+                'r.NOMBRE_REVISTA',
+                'pr.ANIO_PUBLICACION',
+                'tp.NOMBRE_TIPO',
+                'p.KEYWORDS'
+            )
+            ->orderByDesc('pr.ID_PROYECTO_REVISTA')
+            ->get();
+
+        $filtros = [
+            'tipo' => $tipo,
+            'q'    => $busqueda,
+        ];
+
+        // Cargar vista y generar el PDF
+        $pdf = Pdf::loadView('admin.publicaciones.export_pdf', [
+            'publicaciones' => $publicaciones,
+            'filtros'       => $filtros,
+        ]);
+
+        // Configurar tamaño A4 y orientación horizontal
+        $pdf->setPaper('a4', 'landscape');
+
+        return $pdf->download('reporte_publicaciones_' . date('Ymd_His') . '.pdf');
+    }
 }

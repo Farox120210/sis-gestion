@@ -1,206 +1,248 @@
 @extends('layouts.admin')
 
 @section('content')
-    <div class="row">
-        <div class="col-12 d-flex justify-content-between align-items-center">
-            <h1 class="h3 mb-0">Detalle de publicación</h1>
+    <div class="container-fluid py-4">
+        
+        {{-- ==========================================
+             BARRA SUPERIOR DE ACCIONES (Volver, Editar, Eliminar)
+             ========================================== --}}
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <a href="{{ route('publicaciones.index') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> Volver al listado
+            </a>
+            
             <div>
-                <a href="{{ route('publicaciones.index') }}" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left"></i> Volver
-                </a>
-                <a href="{{ route('publicaciones.edit', $pub->id_publicacion) }}" class="btn btn-warning">
+                <a href="{{ route('publicaciones.edit', $pub->id_publicacion) }}" class="btn btn-warning btn-sm text-white">
                     <i class="bi bi-pencil-square"></i> Editar
                 </a>
-            </div>
-        </div>
-    </div>
-
-    <hr>
-
-    {{-- Encabezado --}}
-    <div class="row mb-3">
-        <div class="col-12">
-            <div class="card card-outline card-primary">
-                <div class="card-body">
-                    <h2 class="h4 mb-2">{{ $pub->titulo }}</h2>
-                    <div class="text-muted">
-                        <span class="mr-3"><strong>Año proyecto:</strong> {{ $pub->anio_proyecto }}</span>
-                        <span class="mr-3"><strong>Año publicación:</strong> {{ $pub->anio_publicacion }}</span>
-                        @if ($pub->estado)
-                            <span class="badge badge-info">{{ $pub->estado }}</span>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Datos del proyecto --}}
-    <div class="row">
-        <div class="col-md-7">
-            <div class="card card-outline card-secondary">
-                <div class="card-header">
-                    <h3 class="card-title mb-0">Datos del proyecto</h3>
-                </div>
-
-                <div class="card-body">
-                    <p class="mb-3">{{ $pub->descripcion ?: '—' }}</p>
-
-                    <div class="row">
-                        <div class="col-sm-6 mb-2">
-                            <strong>Área de investigación:</strong><br>
-                            {{ $pub->area ?: '—' }}
-                        </div>
-                        <div class="col-sm-6 mb-2">
-                            <strong>Tipo de investigación:</strong><br>
-                            {{ $pub->tipo ?: '—' }}
-                        </div>
-                        <div class="col-sm-6 mb-2">
-                            <strong>Presupuesto:</strong><br>
-                            {{ is_null($pub->presupuesto) ? '—' : number_format($pub->presupuesto, 2) }}
-                        </div>
-                        <div class="col-sm-6 mb-2">
-                            <strong>Fecha inicio:</strong><br>
-                            {{ $pub->fecha_inicio ?: '—' }}
-                        </div>
-                        <div class="col-sm-6 mb-2">
-                            <strong>Fecha fin:</strong><br>
-                            {{ $pub->fecha_fin ?: '—' }}
-                        </div>
-                    </div>
-                </div>
+                
+                <form action="{{ route('publicaciones.destroy', $pub->id_publicacion) }}" method="POST" class="d-inline">
+                    @csrf @method('DELETE')
+                    <button type="submit" onclick="return confirm('¿Eliminar esta publicación?')" class="btn btn-danger btn-sm">
+                        <i class="bi bi-trash"></i> Eliminar
+                    </button>
+                </form>
             </div>
         </div>
 
-        {{-- Publicación (revista) --}}
-        <div class="col-md-5">
-            <div class="card card-outline card-info">
-                <div class="card-header">
-                    <h3 class="card-title mb-0">Datos de publicación</h3>
-                </div>
-                <div class="card-body">
-                    <div class="mb-2">
-                        <strong>Medio:</strong><br>
-                        {{ $pub->revista }}
-                    </div>
-                    <div class="mb-2">
-                        <strong>Link:</strong><br>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+        {{-- ==========================================
+             TÍTULO PRINCIPAL (Estilo Repositorio)
+             ========================================== --}}
+        <h2 class="mb-4" style="color: var(--unasam-navy); font-weight: 700; line-height: 1.3;">
+            {{ $pub->titulo }}
+            @if ($pub->estado)
+                <span class="badge badge-info align-middle ml-2" style="font-size: 0.8rem; font-weight: 500;">{{ $pub->estado }}</span>
+            @endif
+        </h2>
 
-    {{-- Archivo principal (PDF) --}}
-    <div class="row">
-        <div class="col-12">
-            <div class="card card-outline card-danger">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3 class="card-title mb-0">
-                        <i class="bi bi-file-earmark-pdf"></i> Archivo principal (PDF)
-                    </h3>
-
-                    @if ($archivoPrincipal)
+        <div class="row">
+            {{-- ==========================================
+                 COLUMNA IZQUIERDA (30%) - PORTADA Y ACCIONES PDF
+                 ========================================== --}}
+            <div class="col-md-4 col-lg-3 mb-4">
+                
+                <div class="card shadow-sm mb-3 border-0" style="border-radius: 8px; overflow: hidden;">
+                    <div class="card-header text-center border-0" style="background-color: var(--unasam-navy); color: white;">
+                        <h5 class="card-title w-100 mb-0" style="font-size: 1rem; font-weight: 600;">Portada</h5>
+                    </div>
+                    <div class="card-body text-center bg-white">
+                        
                         @php
-                            // Preferir la URL pública guardada; si no existe, construirla desde PATH en el disco 'public'
-                            $pdfLink =
-                                $archivoPrincipal->URL ?:
-                                ($archivoPrincipal->PATH
-                                    ? \Illuminate\Support\Facades\Storage::disk('public')->url($archivoPrincipal->PATH)
-                                    : null);
-
-                            $tam = $archivoPrincipal->SIZE_BYTES
-                                ? number_format($archivoPrincipal->SIZE_BYTES / 1024, 1) . ' KB'
-                                : '—';
-
+                            $fileName = $archivoPrincipal?->PATH ? basename($archivoPrincipal->PATH) : null;
+                            $tam = $archivoPrincipal && $archivoPrincipal->SIZE_BYTES ? number_format($archivoPrincipal->SIZE_BYTES / 1024, 1) . ' KB' : '—';
                             $ver = $archivoPrincipal->VERSION ?? 1;
                         @endphp
 
-                        @if ($pdfLink)
+                        <div class="border mb-3 bg-light d-flex justify-content-center align-items-center" style="border-radius: 6px; min-height: 220px; overflow: hidden; background-color: #f8f9fa;">
+                            @if ($fileName)
+                                <canvas id="pdf-preview" style="max-width: 100%; height: auto; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></canvas>
+                                
+                                <div id="pdf-loading" class="text-muted small font-weight-bold">
+                                    <i class="fas fa-spinner fa-spin mr-2 text-primary"></i>Generando portada...
+                                </div>
+                            @else
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg" 
+                                     alt="Sin documento" 
+                                     style="height: 110px; opacity: 0.5;">
+                            @endif
+                        </div>
+                        
+                        @if ($fileName)
+                            <div class="text-left mb-3">
+                                <span class="badge bg-secondary mb-2">{{ $tam }}</span>
+                                <p class="small text-muted mb-0 text-break" style="line-height: 1.2;">
+                                    {{ $archivoPrincipal->NOMBRE_ORIGINAL ?? '—' }}
+                                </p>
+                            </div>
+                            
+                            <a href="{{ route('publicaciones.ver-archivo', ['id' => $pub->id_publicacion, 'file' => $fileName]) }}" 
+                               target="_blank" rel="noopener" class="btn btn-outline-danger btn-block mb-2 font-weight-bold" style="border-radius: 6px;">
+                                <i class="bi bi-file-earmark-pdf"></i> Ver PDF (v{{ $ver }})
+                            </a>
+                            
+                            <a href="{{ route('publicaciones.descargar-archivo', ['id' => $pub->id_publicacion, 'file' => $fileName]) }}" 
+                               class="btn btn-primary btn-block font-weight-bold" style="border-radius: 6px;">
+                                <i class="bi bi-download"></i> Descargar
+                            </a>
+                        @else
+                            <div class="alert alert-warning p-2 small m-0 shadow-none border-0">No hay PDF principal asignado aún.</div>
                         @endif
-                    @endif
+                    </div>
                 </div>
 
-                <div class="card-body">
-                    @if ($archivoPrincipal)
-                        <div class="row">
-                            <div class="col-md-8">
-                                <strong>Nombre:</strong> {{ $archivoPrincipal->NOMBRE_ORIGINAL ?? '—' }}<br>
-                                <strong>Tipo:</strong> {{ $archivoPrincipal->MIME_TYPE ?? '—' }}<br>
-                                <strong>Versión:</strong> v{{ $archivoPrincipal->VERSION ?? 1 }}
+                <div class="card shadow-sm mb-3 border-0" style="border-radius: 8px; overflow: hidden;">
+                    <div class="card-header text-center border-0" style="background-color: var(--unasam-navy); color: white;">
+                        <h5 class="card-title w-100 mb-0" style="font-size: 1rem; font-weight: 600;">Citas bibliográficas</h5>
+                    </div>
+                    <div class="card-body text-center p-3 bg-white">
+                        <button class="btn btn-success btn-sm btn-block font-weight-bold" style="border-radius: 6px;" onclick="alert('Funcionalidad Cómo Citar en construcción')">
+                            Cómo citar
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            {{-- ==========================================
+                 COLUMNA DERECHA (70%) - METADATOS COMPLETOS
+                 ========================================== --}}
+            <div class="col-md-8 col-lg-9">
+                
+                <div class="card shadow-sm border-0" style="border-radius: 8px;">
+                    <div class="card-body p-4 bg-white">
+                        
+                        <h6 class="text-uppercase fw-bold mb-2" style="font-size: 0.85rem; color: #6c757d; font-weight: 700;">Autores</h6>
+                        <ul class="list-unstyled mb-4">
+                            <li class="mb-2" style="color: var(--esat-blue); font-size: 1.05rem;">
+                                <i class="bi bi-person-fill mr-1 text-muted"></i> 
+                                {{ $pub->autor_principal }} 
+                                <span class="badge badge-light border text-muted ml-1 font-weight-normal">Autor principal</span>
+                            </li>
+                            @foreach ($autores as $a)
+                                @continue($a->nombre === $pub->autor_principal)
+                                <li class="mb-1" style="color: var(--esat-blue); font-size: 1rem;">
+                                    <i class="bi bi-person mr-1 text-muted"></i> 
+                                    {{ $a->nombre }}
+                                    @if ($a->ROL_EN_PROYECTO)
+                                        <span class="text-muted ml-1" style="font-size: 0.85rem;">— {{ $a->ROL_EN_PROYECTO }}</span>
+                                    @endif
+                                </li>
+                            @endforeach
+                        </ul>
+
+                        <div class="row mb-4">
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <h6 class="text-uppercase fw-bold mb-1" style="font-size: 0.85rem; color: #6c757d; font-weight: 700;">Año Publicación</h6>
+                                <p class="m-0 text-dark">{{ $pub->anio_publicacion ?: '—' }}</p>
+                            </div>
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <h6 class="text-uppercase fw-bold mb-1" style="font-size: 0.85rem; color: #6c757d; font-weight: 700;">Año Proyecto</h6>
+                                <p class="m-0 text-dark">{{ $pub->anio_proyecto ?: '—' }}</p>
                             </div>
                             <div class="col-md-4">
-                                <strong>Tamaño:</strong> {{ $tam }}<br>
-                                <strong>Subido:</strong>
-                                {{ \Carbon\Carbon::parse($archivoPrincipal->FECHA_SUBIDA)->format('d/m/Y H:i') }}
+                                <h6 class="text-uppercase fw-bold mb-1" style="font-size: 0.85rem; color: #6c757d; font-weight: 700;">Período</h6>
+                                <p class="m-0 text-dark">
+                                    {{ $pub->fecha_inicio ?: '—' }} <span class="text-muted mx-1">al</span> {{ $pub->fecha_fin ?: '—' }}
+                                </p>
                             </div>
                         </div>
-                    @else
-                        <span class="text-muted">No hay PDF principal asignado aún.</span>
-                    @endif
+
+                        <hr class="my-4" style="border-top: 1px dashed #e9ecef;">
+
+                        <div class="row mb-4">
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <h6 class="text-uppercase fw-bold mb-1" style="font-size: 0.85rem; color: #6c757d; font-weight: 700;">Tipo de Material</h6>
+                                <p class="m-0 text-dark">{{ $pub->tipo ?: '—' }}</p>
+                            </div>
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <h6 class="text-uppercase fw-bold mb-1" style="font-size: 0.85rem; color: #6c757d; font-weight: 700;">Área de Investigación</h6>
+                                <p class="m-0 text-dark">{{ $pub->area ?: '—' }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h6 class="text-uppercase fw-bold mb-1" style="font-size: 0.85rem; color: #6c757d; font-weight: 700;">Presupuesto</h6>
+                                <p class="m-0 text-dark">{{ is_null($pub->presupuesto) ? '—' : 'S/ ' . number_format($pub->presupuesto, 2) }}</p>
+                            </div>
+                        </div>
+
+                        <hr class="my-4" style="border-top: 1px dashed #e9ecef;">
+
+                        <h6 class="text-uppercase fw-bold mb-2" style="font-size: 0.85rem; color: #6c757d; font-weight: 700;">Resumen / Descripción</h6>
+                        <p class="text-justify text-dark" style="line-height: 1.7; font-size: 0.95rem;">
+                            {{ $pub->descripcion ?: 'Este proyecto no cuenta con una descripción detallada en este momento. Puede revisar el documento adjunto para más información.' }}
+                        </p>
+
+                        <hr class="my-4" style="border-top: 1px dashed #e9ecef;">
+
+                        <h6 class="text-uppercase fw-bold mb-2" style="font-size: 0.85rem; color: #6c757d; font-weight: 700;">Palabras clave</h6>
+                        <div class="mb-4">
+                            @if(!empty($pub->keywords))
+                                @foreach(explode(',', $pub->keywords) as $keyword)
+                                    <span class="badge badge-light border text-dark mr-1 mb-1 px-3 py-2" style="font-size: 0.85rem; border-radius: 20px; background-color: rgba(7, 20, 68, 0.05);">
+                                        <i class="fas fa-tag mr-1 text-muted"></i>{{ trim($keyword) }}
+                                    </span>
+                                @endforeach
+                            @else
+                                <span class="text-muted small">No se registraron palabras clave.</span>
+                            @endif
+                        </div>
+
+                        <hr class="my-4" style="border-top: 1px dashed #e9ecef;">
+
+                        <h6 class="text-uppercase fw-bold mb-1" style="font-size: 0.85rem; color: #6c757d; font-weight: 700;">Colección / Medio</h6>
+                        <p class="mb-0" style="color: var(--unasam-navy); font-weight: 500;">{{ $pub->revista ?: '—' }}</p>
+
+                    </div>
                 </div>
-                @php
-                    $fileName = $archivoPrincipal?->PATH ? basename($archivoPrincipal->PATH) : null;
-                @endphp
-
-                @if ($fileName)
-                    <a href="{{ route('publicaciones.ver-archivo', ['id' => $pub->id_publicacion, 'file' => $fileName]) }}"
-                        target="_blank" rel="noopener" class="btn btn-outline-danger">
-                        <i class="bi bi-file-earmark-pdf"></i> Ver PDF (v{{ $ver }})
-                    </a>
-
-                    <a href="{{ route('publicaciones.descargar-archivo', ['id' => $pub->id_publicacion, 'file' => $fileName]) }}"
-                        class="btn btn-outline-primary">
-                        <i class="bi bi-download"></i> Descargar
-                    </a>
-                @endif
+                
             </div>
-        </div>
-    </div>
-
-    {{-- Autores --}}
-    <div class="row">
-        <div class="col-12">
-            <div class="card card-outline card-success">
-                <div class="card-header">
-                    <h3 class="card-title mb-0">Autores</h3>
-                </div>
-                <div class="card-body">
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-1">
-                            <i class="bi bi-person-fill"></i>
-                            <strong>{{ $pub->autor_principal }}</strong>
-                            <span class="badge badge-primary">Autor principal</span>
-                        </li>
-                        @foreach ($autores as $a)
-                            @continue($a->nombre === $pub->autor_principal)
-                            <li class="mb-1">
-                                <i class="bi bi-person"></i> {{ $a->nombre }}
-                                @if ($a->ROL_EN_PROYECTO)
-                                    <span class="text-muted">— {{ $a->ROL_EN_PROYECTO }}</span>
-                                @endif
-                            </li>
-                        @endforeach
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Acciones inferiores --}}
-    <div class="row">
-        <div class="col-12 text-right">
-            <a href="{{ route('publicaciones.index') }}" class="btn btn-outline-secondary">Volver al listado</a>
-            <a href="{{ route('publicaciones.edit', $pub->id_publicacion) }}" class="btn btn-warning">
-                <i class="bi bi-pencil-square"></i> Editar
-            </a>
-
-            <form action="{{ route('publicaciones.destroy', $pub->id_publicacion) }}" method="POST" class="d-inline">
-                @csrf @method('DELETE')
-                <button type="submit" onclick="return confirm('¿Eliminar esta publicación?')" class="btn btn-danger">
-                    <i class="bi bi-trash"></i> Eliminar
-                </button>
-            </form>
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    {{-- Solo cargamos PDF.js si realmente hay un archivo para mostrar --}}
+    @if (!empty($fileName))
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+        
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                // Configuramos el worker de PDF.js
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+                // Usamos la misma ruta segura que usas en tu botón "Ver PDF"
+                const url = "{{ route('publicaciones.ver-archivo', ['id' => $pub->id_publicacion, 'file' => $fileName]) }}";
+
+                const loadingTask = pdfjsLib.getDocument(url);
+                
+                loadingTask.promise.then(function(pdf) {
+                    // Extraer solo la primera página (1)
+                    return pdf.getPage(1);
+                }).then(function(page) {
+                    // Escala para darle buena resolución
+                    const scale = 1.2; 
+                    const viewport = page.getViewport({scale: scale});
+
+                    // Seleccionamos el canvas
+                    const canvas = document.getElementById('pdf-preview');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    const renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+                    
+                    page.render(renderContext).promise.then(function() {
+                        // Al terminar de pintar, ocultamos el estado de "Cargando..."
+                        document.getElementById('pdf-loading').style.display = 'none';
+                        canvas.style.display = 'block';
+                    });
+                }).catch(function(error) {
+                    console.error('Error al cargar la portada del PDF: ', error);
+                    document.getElementById('pdf-loading').innerHTML = '<i class="fas fa-exclamation-triangle text-danger mr-1"></i> No se pudo cargar la vista previa';
+                });
+            });
+        </script>
+    @endif
+@endpush

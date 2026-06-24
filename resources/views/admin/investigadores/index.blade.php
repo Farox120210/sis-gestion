@@ -22,14 +22,6 @@
 
     <hr>
 
-    {{-- Mensajes flash --}}
-    @if (session('ok'))
-        <div class="alert alert-success">{{ session('ok') }}</div>
-    @endif
-    @if (session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
-
     {{-- Listado --}}
     <div class="row">
         <div class="col-12">
@@ -102,7 +94,7 @@
                     {{-- Paginación --}}
                     @if (method_exists($investigadores, 'links'))
                         <div class="mt-2 d-flex justify-content-center">
-                            {{ $investigadores->appends(['q' => request('q')])->links() }}
+                            {{ $investigadores->appends(['q' => request('q')])->links('pagination::bootstrap-5') }}
                         </div>
                     @endif
                 </div>

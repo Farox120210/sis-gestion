@@ -22,9 +22,18 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
     <!--iconos-->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-   
 
+    <link rel="stylesheet" href="{{ asset('adminlte/css/adminlte.min.css') }}">
 
+    <link rel="stylesheet" href="{{ asset('css/custom.css') }}">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
+
+    <!-- PNotify Styles (Notificaciones elegantes de estilo institucional) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pnotify/3.2.1/pnotify.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pnotify/3.2.1/pnotify.brighttheme.css" />
 </head>
 
 <body class="hold-transition sidebar-mini">
@@ -172,11 +181,18 @@ scratch. This page gets rid of all links and provides the needed markup only.
         <aside class="main-sidebar sidebar-dark-primary elevation-4">
             <!-- Brand Logo -->
             <div>
-                <a href="{{ url('/') }}" class="brand-link d-flex align-items-center justify-content-center">
-                    <img src="{{ asset('dist/img/ESAT_LogoIdentidad_Sf_Blanco.png') }}" alt="ESAT"
-                        class="brand-image" style="max-height:34px;width:auto;margin:0;object-fit:contain;">
-                </a>
-            </div>
+    {{-- Reemplazamos url('/') por route('admin.index') para ir al dashboard --}}
+    <a href="{{ route('admin.index') }}" class="brand-link text-center px-2">
+        <img src="{{ asset('dist/img/LOGO_UNASAM-removebg-preview.png') }}" alt="Logo ESAT"
+            class="brand-image elevation-3 float-none"
+            style="max-height: 34px; width: auto; object-fit: contain;">
+
+        <span class="brand-text text-white "
+            style="font-family: 'Montserrat', sans-serif; font-weight: 700; letter-spacing: 0.5px; font-size: 1rem; line-height: 1.2;">
+            ESAT-UNASAM
+        </span>
+    </a>
+</div>
             <!-- Sidebar -->
             <div class="sidebar">
                 <!-- Sidebar user panel (optional) -->
@@ -185,8 +201,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
                         <img src={{ asset('dist/img/perfil.png') }} class="img-circle elevation-2" alt="User Image">
                     </div>
                     <div class="info">
-                        <a href="#" class="d-block">{{ Auth::user()->name }} </a>
-                        <a>{{ Auth::user()->email }} </a>
+                        <a href="#" class="d-block">{{ Auth::user()?->name ?? 'Invitado' }} </a>
+                        <a>{{ Auth::user()?->email ?? '' }} </a>
 
                     </div>
                 </div>
@@ -209,7 +225,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                         data-accordion="false">
                         <!-- Add icons to the links using the .nav-icon class
                with font-awesome or any other icon font library -->
-                        <li class="nav-item">
+                        <li class="nav-item menu-open">
                             <a href="#" class="nav-link active">
                                 <i class="bi bi-people-fill"></i>
                                 <p>
@@ -217,37 +233,33 @@ scratch. This page gets rid of all links and provides the needed markup only.
                                     <i class="right fas fa-angle-left"></i>
                                 </p>
                             </a>
-                            <ul class="nav nav-treeview">
+                            <ul class="nav nav-treeview" style="display: block;">
+
                                 <li class="nav-item">
-                                    <a href="{{ url('/admin/usuarios') }}" class="nav-link active">
-                                        <i class="far fa-circle nav-icon"></i>
+                                    {{-- Si la URL contiene 'admin/usuarios', imprime 'active', sino no imprime nada --}}
+                                    <a href="{{ url('/admin/usuarios') }}"
+                                        class="nav-link {{ request()->is('admin/usuarios*') ? 'active' : '' }}">
+                                        <i class="fas fa-users nav-icon"></i>
                                         <p>Usuarios</p>
                                     </a>
                                 </li>
+
                                 <li class="nav-item">
-                                    <a href="{{ url('/admin/publicaciones') }}" class="nav-link active">
-                                        <i class="far fa-circle nav-icon"></i>
+                                    <a href="{{ url('/admin/publicaciones') }}"
+                                        class="nav-link {{ request()->is('admin/publicaciones*') ? 'active' : '' }}">
+                                        <i class="fas fa-book-open nav-icon"></i>
                                         <p>Publicaciones</p>
                                     </a>
                                 </li>
+
                                 <li class="nav-item">
-                                    <a href="{{ url('/admin/investigadores') }}" class="nav-link active">
-                                        <i class="far fa-circle nav-icon"></i>
+                                    <a href="{{ url('/admin/investigadores') }}"
+                                        class="nav-link {{ request()->is('admin/investigadores*') ? 'active' : '' }}">
+                                        <i class="fas fa-id-badge nav-icon"></i>
                                         <p>Lista de investigadores</p>
                                     </a>
                                 </li>
-                                <!-- <li class="nav-item">
-                                    <a href="{{ url('usuarios') }}" class="nav-link active">
-                                        <i class="far fa-circle nav-icon"></i>
-                                        <p>Grupos de investigación</p>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a href="{{ url('usuarios') }}" class="nav-link active">
-                                        <i class="far fa-circle nav-icon"></i>
-                                        <p>Areas de investigación</p>
-                                    </a>
-                                </li>-->
+
                             </ul>
 
 
@@ -354,7 +366,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
             // Comprueba que select2 está disponible
             if (typeof $.fn.select2 !== 'function') {
                 console.error(
-                'Select2 no está cargado. Revisa que jQuery y select2.full.min.js se hayan incluido.');
+                    'Select2 no está cargado. Revisa que jQuery y select2.full.min.js se hayan incluido.');
                 return;
             }
 
@@ -387,8 +399,57 @@ scratch. This page gets rid of all links and provides the needed markup only.
             height: 38px;
         }
     </style>
+
+    <!-- PNotify Core JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pnotify/3.2.1/pnotify.js"></script>
+
+    <!-- PNotify Notificaciones Automáticas de Flash Laravel -->
+    <script>
+        $(document).ready(function() {
+            @if(session('ok'))
+                new PNotify({
+                    title: 'Éxito',
+                    text: "{{ session('ok') }}",
+                    type: 'success',
+                    delay: 4000,
+                    styling: 'brighttheme'
+                });
+            @endif
+
+            @if(session('error'))
+                new PNotify({
+                    title: 'Error',
+                    text: "{{ session('error') }}",
+                    type: 'error',
+                    delay: 5000,
+                    styling: 'brighttheme'
+                });
+            @endif
+
+            @if(session('info'))
+                new PNotify({
+                    title: 'Información',
+                    text: "{{ session('info') }}",
+                    type: 'info',
+                    delay: 4000,
+                    styling: 'brighttheme'
+                });
+            @endif
+
+            @if(session('status'))
+                new PNotify({
+                    title: 'Estado',
+                    text: "{{ session('status') }}",
+                    type: 'info',
+                    delay: 4000,
+                    styling: 'brighttheme'
+                });
+            @endif
+        });
+    </script>
+
     @stack('scripts')
-@yield('scripts')
+    @yield('scripts')
 
 </body>
 
