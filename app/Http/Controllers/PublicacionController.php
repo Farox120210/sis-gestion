@@ -248,73 +248,78 @@ class PublicacionController extends Controller
                 );
             }
 
-            // 5) PDF opcional – SIN Storage::url, guardado manual en storage/app/public
+
+            // 5) PDF opcional (single) → tabla hija + marcar principal
             if ($request->hasFile('pdf')) {
                 $file = $request->file('pdf');
 
-                if (!$file->isValid() || $file->getError() !== UPLOAD_ERR_OK) {
-                    $msg = $file->getErrorMessage();
-                    Log::error('Fallo de subida PDF', [
-                        'php_error' => $file->getError(),
-                        'msg'       => $msg,
-                    ]);
-                    return back()
-                        ->withInput()
-                        ->withErrors(['pdf' => 'No se pudo subir el PDF: ' . $msg]);
+                // 5.1 Verifica error de subida de PHP antes de procesar
+                if ($file->getError() !== UPLOAD_ERR_OK) {
+                    $msg = $file->getErrorMessage(); // método de instancia, sin args
+                    Log::error('Fallo de subida (PHP)', ['php_error' => $file->getError(), 'msg' => $msg]);
+                    return back()->withInput()->withErrors(['pdf' => 'No se pudo subir el PDF: ' . $msg]);
                 }
-
-                // 1) Capturamos TODO lo que necesitemos ANTES del move()
-                $originalName = $file->getClientOriginalName();
-                $sizeBytes    = $file->getSize();
-                $mimeType     = $file->getMimeType();
 
                 Log::info('PDF detectado', [
-                    'original' => $originalName,
-                    'size'     => $sizeBytes,
-                    'mime'     => $mimeType,
+                    'original' => $file->getClientOriginalName(),
+                    'size'     => $file->getSize(),
+                    'mime'     => $file->getMimeType(),
                 ]);
 
-                // 2) Directorios
-                $relativeDir = "publicaciones/{$idPublicacion}";              // relativo dentro de public
-                $rootPublic  = storage_path('app/public');                    // raíz del disco public
-                $fullDir     = $rootPublic . DIRECTORY_SEPARATOR . $relativeDir;
-
-                if (!is_dir($fullDir)) {
-                    mkdir($fullDir, 0775, true);
-                }
-
-                // 3) Nombre único de archivo
+                $disk = 'public';
+                $directory = "publicaciones/{$idPublicacion}";
                 $fileName = (string) Str::uuid() . '.pdf';
 
-                // 4) Mover físicamente el archivo a storage/app/public/publicaciones/{id}
-                $file->move($fullDir, $fileName);
+                try {
+                    // Asegura la carpeta destino
+                    Storage::disk($disk)->makeDirectory($directory);
 
-                // 5) Paths
-                $storedPath = $relativeDir . '/' . $fileName;   // publicaciones/{id}/uuid.pdf
-                $publicUrl  = '/storage/' . $storedPath;        // /storage/publicaciones/{id}/uuid.pdf
+                    // Guarda el archivo en el disco configurado y obtiene la ruta relativa
+                    $storedPath = Storage::disk($disk)->putFileAs($directory, $file, $fileName);
 
-                // 6) Hash sobre el archivo ya movido
-                $absolutePath = $rootPublic . DIRECTORY_SEPARATOR . $storedPath;
-                $hash = hash_file('sha256', $absolutePath);
+                    if (empty($storedPath)) {
+                        throw new \RuntimeException('putFileAs devolvió ruta vacía.');
+                    }
 
-                // 7) Insert en tabla de archivos usando los datos capturados ANTES del move()
-                $idArchivo = DB::table('proyecto_revista_archivos')->insertGetId([
-                    'ID_PROYECTO_REVISTA' => $idPublicacion,
-                    'NOMBRE_ORIGINAL'     => $originalName,
-                    'DISK'                => 'public',
-                    'PATH'                => $storedPath,
-                    'URL'                 => $publicUrl,
-                    'MIME_TYPE'           => $mimeType,
-                    'SIZE_BYTES'          => $sizeBytes,
-                    'HASH_SHA256'         => $hash,
-                    'TIPO'                => 'publicado',
-                    'VERSION'             => 1,
-                    'LICENCIA'            => null,
-                ]);
+                    $publicUrl = '/storage/' . $storedPath;
+                    $absolutePath = Storage::disk($disk)->path($storedPath);
 
-                DB::table('proyecto_revista')
-                    ->where('ID_PROYECTO_REVISTA', $idPublicacion)
-                    ->update(['ID_ARCHIVO_PRINCIPAL' => $idArchivo]);
+                    Log::debug('STORAGE DEBUG POST', [
+                        'storedPath' => $storedPath,
+                        'exists'     => Storage::disk($disk)->exists($storedPath),
+                        'publicUrl'  => $publicUrl,
+                    ]);
+
+                    $hash = hash_file('sha256', $absolutePath);
+
+                    $idArchivo = DB::table('proyecto_revista_archivos')->insertGetId([
+                        'ID_PROYECTO_REVISTA' => $idPublicacion,
+                        'NOMBRE_ORIGINAL'     => $file->getClientOriginalName(),
+                        'DISK'                => $disk,
+                        'PATH'                => $storedPath,
+                        'URL'                 => $publicUrl,
+                        'MIME_TYPE'           => $file->getMimeType(),
+                        'SIZE_BYTES'          => $file->getSize(),
+                        'HASH_SHA256'         => $hash,
+                        'TIPO'                => 'publicado',
+                        'VERSION'             => 1,
+                        'LICENCIA'            => null,
+                    ]);
+
+                    DB::table('proyecto_revista')
+                        ->where('ID_PROYECTO_REVISTA', $idPublicacion)
+                        ->update(['ID_ARCHIVO_PRINCIPAL' => $idArchivo]);
+                } catch (\Throwable $ex) {
+                    Log::error('Error subiendo/registrando PDF', [
+                        'msg'  => $ex->getMessage(),
+                        'line' => $ex->getLine(),
+                        'file' => $ex->getFile(),
+                    ]);
+
+                    throw $ex; // rollback por transacción
+                }
+            } else {
+                Log::warning('hasFile("pdf") == false');
             }
 
             DB::commit();
@@ -405,6 +410,7 @@ class PublicacionController extends Controller
                 ->select([
                     'ID_ARCHIVO',
                     'NOMBRE_ORIGINAL',
+                    'DISK',
                     'URL',
                     'PATH',
                     'MIME_TYPE',
@@ -446,6 +452,7 @@ class PublicacionController extends Controller
             ->where('pr.ID_PROYECTO_REVISTA', $id)
             ->select([
                 'pr.ID_PROYECTO_REVISTA as id_publicacion',
+                'pr.ID_ARCHIVO_PRINCIPAL as id_archivo_principal',
                 'pr.ID_REVISTA as id_revista',
                 'pr.ANIO_PUBLICACION as anio_publicacion',
 
@@ -508,6 +515,11 @@ class PublicacionController extends Controller
             ->pluck('ID_INVESTIGADOR')
             ->toArray();
 
+        $archivos = DB::table('proyecto_revista_archivos')
+            ->where('ID_PROYECTO_REVISTA', $id)
+            ->orderByDesc('FECHA_SUBIDA')
+            ->get();
+
         return view('admin.publicaciones.edit', [
             'pub'            => $pub,
             'areas'          => $areas,
@@ -517,6 +529,7 @@ class PublicacionController extends Controller
             'investigadores' => $investigadores,
             'coautorIds'     => $coautorIds,
             'tipos'          => $tipos,
+            'archivos'       => $archivos,
         ]);
     }
 

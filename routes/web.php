@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\WelcomeController; 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ArchivoPublicacionController;
 use App\Http\Controllers\PublicacionController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\InvestigadorController;
@@ -29,7 +30,17 @@ Route::get('public/publicaciones/{id}/download/{file}', [WelcomeController::clas
 // AUTH
 // --------------------------------------------------
 
-Auth::routes();
+Auth::routes(['register' => false]);
+
+// --------------------------------------------------
+// ACTIVACIÓN DE CUENTA (Flujo de Invitación)
+// --------------------------------------------------
+Route::get('/activate/{token}', [\App\Http\Controllers\Auth\ActivationController::class, 'showForm'])
+    ->name('activation.form')
+    ->middleware('guest');
+Route::post('/activate/{token}', [\App\Http\Controllers\Auth\ActivationController::class, 'activate'])
+    ->name('activation.process')
+    ->middleware('guest');
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
@@ -84,6 +95,10 @@ Route::delete('/usuarios/{id}', [UsuarioController::class, 'destroy'])
     ->name('usuarios.destroy')
     ->middleware('auth');
 
+Route::post('/admin/usuarios/{id}/resend-invitation', [UsuarioController::class, 'resendInvitation'])
+    ->name('usuarios.resend-invitation')
+    ->middleware('auth');
+
     
 
 // --------------------------------------------------
@@ -116,6 +131,15 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     Route::get('publicaciones/{id}/download/{file}', [PublicacionController::class, 'descargarArchivo'])
         ->where('file', '.*')
         ->name('publicaciones.descargar-archivo');
+
+    Route::post('publicaciones/{publicacion}/archivos', [ArchivoPublicacionController::class, 'store'])
+        ->name('publicaciones.archivos.store');
+
+    Route::delete('publicaciones/{publicacion}/archivos/{archivo}', [ArchivoPublicacionController::class, 'destroy'])
+        ->name('publicaciones.archivos.destroy');
+
+    Route::patch('publicaciones/{publicacion}/archivos/{archivo}/principal', [ArchivoPublicacionController::class, 'setPrincipal'])
+        ->name('publicaciones.archivos.principal');
 
     // INVESTIGADORES
     Route::resource('investigadores', InvestigadorController::class)

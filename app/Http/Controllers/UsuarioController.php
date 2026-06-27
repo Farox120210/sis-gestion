@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\UserInvitationMail;
 
 class UsuarioController extends Controller
 {
@@ -34,26 +37,36 @@ class UsuarioController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'     => 'required|max:200',
-            'email'    => 'required|unique:users',
-            'password' => 'required|confirmed',
-            'rol'      => 'required|in:super_admin,publicador,espectador',
+            'name'  => 'required|max:200',
+            'email' => 'required|email|unique:users,email',
+            'rol'   => 'required|in:super_admin,publicador,espectador',
+        ], [
+            'name.required'  => 'El nombre es obligatorio.',
+            'name.max'       => 'El nombre no debe superar los 200 caracteres.',
+            'email.required' => 'El correo electrónico es obligatorio.',
+            'email.email'    => 'El formato del correo electrónico no es válido.',
+            'email.unique'   => 'Este correo electrónico ya está registrado en el sistema.',
+            'rol.required'   => 'El rol del usuario es obligatorio.',
+            'rol.in'         => 'El rol seleccionado no es válido.',
         ]);
         
+        $token = Str::random(60);
+
         $usuario = new User();
         $usuario->name     = $request->name;
         $usuario->email    = $request->email;
-        
-        // 👉 MEJORA DE SEGURIDAD: Encriptamos la contraseña al crear
-        $usuario->password = Hash::make($request->password); 
-        
-        // 👉 NUEVO: Guardamos el rol en la base de datos
-        $usuario->rol      = $request->rol; 
-
+        $usuario->rol      = $request->rol;
+        $usuario->status   = 'inactive';
+        $usuario->activation_token = $token;
+        $usuario->activation_token_expires_at = now()->addHours(24);
         $usuario->save();
         
+        // Generamos la URL de activación y enviamos el correo electrónico
+        $activationUrl = route('activation.form', ['token' => $token]);
+        Mail::to($usuario->email)->send(new UserInvitationMail($usuario, $activationUrl));
+        
         return redirect()->route('usuarios.index')
-            ->with('ok', 'Usuario creado correctamente.');
+            ->with('ok', 'Usuario creado correctamente. Se ha enviado un correo electrónico de invitación para activar la cuenta.');
     }
 
     /**
@@ -123,5 +136,31 @@ class UsuarioController extends Controller
         $usuario->delete();
 
         return redirect()->route('usuarios.index');
+    }
+
+    /**
+     * Reenvía el correo de invitación a un usuario inactivo.
+     */
+    public function resendInvitation($id)
+    {
+        $usuario = User::findOrFail($id);
+
+        if ($usuario->status === 'active') {
+            return redirect()->route('usuarios.index')
+                ->with('error', 'El usuario ya se encuentra activo.');
+        }
+
+        // Regeneramos el token y expiración
+        $token = Str::random(60);
+        $usuario->activation_token = $token;
+        $usuario->activation_token_expires_at = now()->addHours(24);
+        $usuario->save();
+
+        // Generamos la URL de activación y enviamos el correo
+        $activationUrl = route('activation.form', ['token' => $token]);
+        Mail::to($usuario->email)->send(new UserInvitationMail($usuario, $activationUrl));
+
+        return redirect()->route('usuarios.index')
+            ->with('ok', 'Invitación reenviada correctamente al correo ' . $usuario->email . '.');
     }
 }
