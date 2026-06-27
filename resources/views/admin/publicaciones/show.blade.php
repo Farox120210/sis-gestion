@@ -102,37 +102,61 @@
                 </div>
 
             </div>
-            
-        </div>
-        
-    </div>
-<div class="row">
-        <div class="col-12">
-            <div class="card card-outline card-danger">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3 class="card-title mb-0">
-                        <i class="bi bi-file-earmark-pdf"></i> Archivo principal (PDF)
-                    </h3>
-                    @if ($archivoPrincipal)
-                        @php
-                            $pdfLink = $archivoPrincipal->URL ?: $archivoPrincipal->PATH;
-                            $tam = $archivoPrincipal->SIZE_BYTES
-                                ? number_format($archivoPrincipal->SIZE_BYTES / 1024, 1) . ' KB'
-                                : '—';
-                            $ver = $archivoPrincipal->VERSION ?? 1;
-                        @endphp
-                        <a href="{{ $pdfLink }}" target="_blank" class="btn btn-outline-danger">
-                            <i class="bi bi-file-earmark-pdf"></i> Ver PDF (v{{ $ver }})
-                        </a>
-                    @endif
-                </div>
-                <div class="card-body">
-                    @if ($archivoPrincipal)
-                        <div class="row">
-                            <div class="col-md-8">
-                                <strong>Nombre:</strong> {{ $archivoPrincipal->NOMBRE_ORIGINAL ?? '—' }}<br>
-                                <strong>Tipo:</strong> {{ $archivoPrincipal->MIME_TYPE ?? '—' }}<br>
-                                <strong>Versión:</strong> v{{ $archivoPrincipal->VERSION ?? 1 }}
+
+            {{-- ==========================================
+                 COLUMNA DERECHA (70%) - METADATOS COMPLETOS
+                 ========================================== --}}
+            <div class="col-md-8 col-lg-9">
+                
+                <div class="card shadow-sm border-0" style="border-radius: 8px;">
+                    <div class="card-body p-4 bg-white">
+                        
+                        <h6 class="text-uppercase fw-bold mb-2" style="font-size: 0.85rem; color: #6c757d; font-weight: 700;">Autores</h6>
+                        <ul class="list-unstyled mb-4">
+                            <li class="mb-2" style="color: var(--esat-blue); font-size: 1.05rem;">
+                                <i class="bi bi-person-fill mr-1 text-muted"></i> 
+                                {{ $pub->autor_principal }} 
+                                <span class="badge badge-light border text-muted ml-1 font-weight-normal">Autor principal</span>
+                            </li>
+                            @foreach ($autores as $a)
+                                @continue($a->nombre === $pub->autor_principal)
+                                <li class="mb-1" style="color: var(--esat-blue); font-size: 1rem;">
+                                    <i class="bi bi-person mr-1 text-muted"></i> 
+                                    {{ $a->nombre }}
+                                    @if ($a->ROL_EN_PROYECTO)
+                                        <span class="text-muted ml-1" style="font-size: 0.85rem;">— {{ $a->ROL_EN_PROYECTO }}</span>
+                                    @endif
+                                </li>
+                            @endforeach
+                        </ul>
+
+                        <div class="row mb-4">
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <h6 class="text-uppercase fw-bold mb-1" style="font-size: 0.85rem; color: #6c757d; font-weight: 700;">Año Publicación</h6>
+                                <p class="m-0 text-dark">{{ $pub->anio_publicacion ?: '—' }}</p>
+                            </div>
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <h6 class="text-uppercase fw-bold mb-1" style="font-size: 0.85rem; color: #6c757d; font-weight: 700;">Año Proyecto</h6>
+                                <p class="m-0 text-dark">{{ $pub->anio_proyecto ?: '—' }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h6 class="text-uppercase fw-bold mb-1" style="font-size: 0.85rem; color: #6c757d; font-weight: 700;">Período</h6>
+                                <p class="m-0 text-dark">
+                                    {{ $pub->fecha_inicio ?: '—' }} <span class="text-muted mx-1">al</span> {{ $pub->fecha_fin ?: '—' }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <hr class="my-4" style="border-top: 1px dashed #e9ecef;">
+
+                        <div class="row mb-4">
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <h6 class="text-uppercase fw-bold mb-1" style="font-size: 0.85rem; color: #6c757d; font-weight: 700;">Tipo de Material</h6>
+                                <p class="m-0 text-dark">{{ $pub->tipo ?: '—' }}</p>
+                            </div>
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <h6 class="text-uppercase fw-bold mb-1" style="font-size: 0.85rem; color: #6c757d; font-weight: 700;">Área de Investigación</h6>
+                                <p class="m-0 text-dark">{{ $pub->area ?: '—' }}</p>
                             </div>
                             <div class="col-md-4">
                                 <h6 class="text-uppercase fw-bold mb-1" style="font-size: 0.85rem; color: #6c757d; font-weight: 700;">Presupuesto</h6>
