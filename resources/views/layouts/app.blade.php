@@ -8,6 +8,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ config('app.name', 'Laravel') }}</title>
+    <link rel="icon" type="image/png" href="{{ asset('dist/img/LOGO_UNASAM-removebg-preview.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ asset('dist/img/LOGO_UNASAM-removebg-preview.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('dist/img/LOGO_UNASAM-removebg-preview.png') }}">
 
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.bunny.net">

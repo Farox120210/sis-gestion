@@ -9,30 +9,36 @@ class AdminController extends Controller
 {
     public function index()
     {
-        // Asegúrate que en .env: DB_DATABASE=sistema_control
-
-        // ===== KPIs =====
-        // Total proyectos
+        // ===== KPIs PRINCIPALES =====
+        // Total publicaciones / proyectos
         $totalPublicaciones = DB::table('proyecto')->count();
 
-        // En curso / Finalizado (por nombre en estado_proyecto)
+        // En desarrollo
         $totalEnCurso = DB::table('proyecto as p')
             ->join('estado_proyecto as ep', 'ep.ID_ESTADO', '=', 'p.ID_ESTADO')
-            ->where('ep.NOMBRE_ESTADO', 'EN DESARROLLO')
+            ->where('ep.NOMBRE_ESTADO', 'LIKE', '%desarrollo%')
             ->count();
 
+        // Publicados / Finalizados
         $totalFinalizados = DB::table('proyecto as p')
             ->join('estado_proyecto as ep', 'ep.ID_ESTADO', '=', 'p.ID_ESTADO')
-            ->where('ep.NOMBRE_ESTADO', 'Publicado')
+            ->where('ep.NOMBRE_ESTADO', 'LIKE', '%publicado%')
+            ->orWhere('ep.NOMBRE_ESTADO', 'LIKE', '%finalizado%')
             ->count();
 
-        // Artículos = proyectos que tienen al menos un registro en proyecto_revista
+        // Artículos en revista
         $totalArticulos = DB::table('proyecto_revista')->distinct('ID_PROYECTO')->count('ID_PROYECTO');
 
-        // ===== Series por AÑO =====
-        // Usa p.ANIO (existe en tu tabla). Orden ascendente.
+        // Total Investigadores registrados
+        $totalInvestigadores = DB::table('investigador')->count();
+
+        // Porcentaje de publicaciones finalizadas
+        $porcentajeCompletado = $totalPublicaciones > 0 ? round(($totalFinalizados / $totalPublicaciones) * 100, 1) : 0;
+
+        // ===== SERIES POR AÑO =====
         $porAnioRows = DB::table('proyecto as p')
             ->selectRaw('p.ANIO as anio, COUNT(*) as total')
+            ->whereNotNull('p.ANIO')
             ->groupBy('p.ANIO')
             ->orderBy('p.ANIO')
             ->get();
@@ -40,7 +46,7 @@ class AdminController extends Controller
         $porAnioLabels = $porAnioRows->pluck('anio');
         $porAnioData   = $porAnioRows->pluck('total');
 
-        // ===== Por ESTADO =====
+        // ===== POR ESTADO =====
         $porEstadoRows = DB::table('proyecto as p')
             ->join('estado_proyecto as ep', 'ep.ID_ESTADO', '=', 'p.ID_ESTADO')
             ->selectRaw('ep.NOMBRE_ESTADO as estado, COUNT(*) as total')
@@ -51,7 +57,7 @@ class AdminController extends Controller
         $porEstadoLabels = $porEstadoRows->pluck('estado');
         $porEstadoData   = $porEstadoRows->pluck('total');
 
-        // ===== Top ÁREAS (7) =====
+        // ===== TOP 7 ÁREAS =====
         $porAreaRows = DB::table('proyecto as p')
             ->join('area_investigacion as a', 'a.ID_AREA', '=', 'p.ID_AREA')
             ->selectRaw('a.NOMBRE_AREA as area, COUNT(*) as total')
@@ -63,28 +69,24 @@ class AdminController extends Controller
         $porAreaLabels = $porAreaRows->pluck('area');
         $porAreaData   = $porAreaRows->pluck('total');
 
-        // ===== Investigación por tipo =====
-// Relación: proyecto.ID_TIPO → tipos_proyecto.ID_TIPO
+        // ===== INVESTIGACIÓN POR TIPO =====
+        $porTipoRows = DB::table('proyecto as p')
+            ->join('tipos_proyecto as tp', 'tp.ID_TIPO', '=', 'p.ID_TIPO')
+            ->selectRaw('tp.NOMBRE_TIPO as tipo, COUNT(*) as total')
+            ->groupBy('tp.NOMBRE_TIPO')
+            ->orderByDesc('total')
+            ->get();
 
-$porTipoRows = DB::table('proyecto as p')
-    ->join('tipos_proyecto as tp', 'tp.ID_TIPO', '=', 'p.ID_TIPO')
-    ->selectRaw('tp.NOMBRE_TIPO as tipo, COUNT(*) as total')
-    ->groupBy('tp.NOMBRE_TIPO')
-    ->orderByDesc('total')
-    ->get();
+        $porTipoLabels = $porTipoRows->pluck('tipo');
+        $porTipoData   = $porTipoRows->pluck('total');
 
-$porTipoLabels = $porTipoRows->pluck('tipo');
-$porTipoData   = $porTipoRows->pluck('total');
-
-
-        // ===== Últimos 12 meses (por FECHA_INICIO/FECHA_FIN) =====
-        // Tomamos COALESCE(FECHA_INICIO, FECHA_FIN) para agrupar por mes.
+        // ===== ÚLTIMOS 12 MESES =====
         $hasta = Carbon::now()->endOfMonth();
         $desde = (clone $hasta)->subMonths(11)->startOfMonth();
 
         $porMesRows = DB::table('proyecto as p')
-            ->selectRaw("DATE_FORMAT(COALESCE(p.FECHA_INICIO, p.FECHA_FIN), '%Y-%m') as ym, COUNT(*) as total")
-            ->whereBetween(DB::raw('COALESCE(p.FECHA_INICIO, p.FECHA_FIN)'), [$desde->toDateString(), $hasta->toDateString()])
+            ->selectRaw("DATE_FORMAT(COALESCE(p.FECHA_INICIO, p.created_at, p.FECHA_FIN), '%Y-%m') as ym, COUNT(*) as total")
+            ->whereBetween(DB::raw('COALESCE(p.FECHA_INICIO, p.created_at, p.FECHA_FIN)'), [$desde->toDateString(), $hasta->toDateString()])
             ->groupBy('ym')
             ->orderBy('ym')
             ->get()
@@ -95,18 +97,17 @@ $porTipoData   = $porTipoRows->pluck('total');
         $cursor = (clone $desde);
         while ($cursor <= $hasta) {
             $ym = $cursor->format('Y-m');
-            $mesLabels[] = $cursor->isoFormat('MMM YYYY'); // requiere locale; si no, usa $cursor->format('M Y')
+            $mesLabels[] = $cursor->translatedFormat('M Y');
             $mesData[]   = isset($porMesRows[$ym]) ? (int)$porMesRows[$ym]->total : 0;
             $cursor->addMonth();
         }
 
-        // ===== Top 5 AUTORES =====
-        // Autor principal es p.ID_AUTOR -> investigador -> persona
+        // ===== TOP INVESTIGADORES (CON DETALLES DE CORREO Y PROYECTOS) =====
         $topAutoresRows = DB::table('proyecto as p')
             ->join('investigador as i', 'i.ID_INVESTIGADOR', '=', 'p.ID_AUTOR')
             ->join('persona as pe', 'pe.ID_PERSONA', '=', 'i.ID_PERSONA')
-            ->selectRaw("CONCAT(pe.NOMBRES, ' ', pe.APELLIDOS) as autor, COUNT(*) as total")
-            ->groupBy('autor')
+            ->selectRaw("i.ID_INVESTIGADOR as id, CONCAT(pe.NOMBRES, ' ', pe.APELLIDOS) as autor, i.CORREO_INSTITUCIONAL as correo, i.TIPO_INVESTIGADOR as tipo_inv, COUNT(*) as total")
+            ->groupBy('i.ID_INVESTIGADOR', 'pe.NOMBRES', 'pe.APELLIDOS', 'i.CORREO_INSTITUCIONAL', 'i.TIPO_INVESTIGADOR')
             ->orderByDesc('total')
             ->limit(5)
             ->get();
@@ -114,14 +115,48 @@ $porTipoData   = $porTipoRows->pluck('total');
         $topAutoresLabels = $topAutoresRows->pluck('autor');
         $topAutoresData   = $topAutoresRows->pluck('total');
 
+        // ===== ÚLTIMAS PUBLICACIONES Y ACTIVIDAD RECIENTE (LIVE FEED) =====
+        $ultimasPublicaciones = DB::table('proyecto as p')
+            ->leftJoin('investigador as i', 'i.ID_INVESTIGADOR', '=', 'p.ID_AUTOR')
+            ->leftJoin('persona as pe', 'pe.ID_PERSONA', '=', 'i.ID_PERSONA')
+            ->leftJoin('estado_proyecto as ep', 'ep.ID_ESTADO', '=', 'p.ID_ESTADO')
+            ->leftJoin('area_investigacion as ai', 'ai.ID_AREA', '=', 'p.ID_AREA')
+            ->leftJoin('tipos_proyecto as tp', 'tp.ID_TIPO', '=', 'p.ID_TIPO')
+            ->select(
+                'p.ID_PROYECTO as id',
+                'p.TITULO as titulo',
+                'p.ANIO as anio',
+                'p.created_at',
+                'ep.NOMBRE_ESTADO as estado',
+                'ai.NOMBRE_AREA as area',
+                'tp.NOMBRE_TIPO as tipo',
+                DB::raw("CONCAT(pe.NOMBRES, ' ', pe.APELLIDOS) as autor")
+            )
+            ->orderByDesc('p.ID_PROYECTO')
+            ->limit(6)
+            ->get();
+
         return view('admin.index', compact(
-            'totalPublicaciones','totalEnCurso','totalFinalizados','totalArticulos',
-            'porAnioLabels','porAnioData',
-            'porEstadoLabels','porEstadoData',
-            'porAreaLabels','porAreaData',
-            'porTipoLabels','porTipoData',
-            'mesLabels','mesData',
-            'topAutoresLabels','topAutoresData'
+            'totalPublicaciones',
+            'totalEnCurso',
+            'totalFinalizados',
+            'totalArticulos',
+            'totalInvestigadores',
+            'porcentajeCompletado',
+            'porAnioLabels',
+            'porAnioData',
+            'porEstadoLabels',
+            'porEstadoData',
+            'porAreaLabels',
+            'porAreaData',
+            'porTipoLabels',
+            'porTipoData',
+            'mesLabels',
+            'mesData',
+            'topAutoresLabels',
+            'topAutoresData',
+            'topAutoresRows',
+            'ultimasPublicaciones'
         ));
     }
 }

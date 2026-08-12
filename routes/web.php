@@ -9,7 +9,9 @@ use App\Http\Controllers\PublicacionController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\InvestigadorController;
 use App\Http\Controllers\Admin\PublicacionDashboardController;
+use App\Http\Controllers\Admin\AuditoriaController;
 use App\Http\Controllers\ProjectController;
+
 use App\Http\Controllers\ExtractArticleController;
 
 // --------------------------------------------------
@@ -99,6 +101,10 @@ Route::post('/admin/usuarios/{id}/resend-invitation', [UsuarioController::class,
     ->name('usuarios.resend-invitation')
     ->middleware('auth');
 
+Route::post('/admin/usuarios/{id}/toggle-status', [UsuarioController::class, 'toggleStatus'])
+    ->name('usuarios.toggle-status')
+    ->middleware('auth');
+
     
 
 // --------------------------------------------------
@@ -159,5 +165,27 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     // EXTRACTOR DE ARTÍCULOS
     Route::post('extract-article', [ExtractArticleController::class, 'extract'])
         ->name('extract.article');
-        
+
+    // AUDITORÍA, ERRORES Y ESTADO DEL SISTEMA (SOLO SUPER_ADMIN)
+    Route::get('auditoria', [AuditoriaController::class, 'index'])
+        ->name('admin.auditoria.index');
+
+    Route::get('auditoria/errores', [AuditoriaController::class, 'errores'])
+        ->name('admin.auditoria.errores');
+
+    Route::get('auditoria/sistema', [AuditoriaController::class, 'sistema'])
+        ->name('admin.auditoria.sistema');
+
+    Route::post('auditoria/backup', [AuditoriaController::class, 'runBackup'])
+        ->name('admin.auditoria.backup.run');
+
+    Route::get('auditoria/backup/{id}/download', [AuditoriaController::class, 'downloadBackup'])
+        ->name('admin.auditoria.backup.download');
+
+    Route::delete('auditoria/backup/{id}', [AuditoriaController::class, 'deleteBackup'])
+        ->name('admin.auditoria.backup.delete');
+
+    Route::post('auditoria/gdrive-config', [AuditoriaController::class, 'saveGoogleDriveConfig'])
+        ->name('admin.auditoria.gdrive-config');
+
 });

@@ -10,8 +10,10 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\UserInvitationMail;
+use App\Services\AuditLoggerService;
 
 class UsuarioController extends Controller
+
 {
     /**
      * Display a listing of the resource.
@@ -65,6 +67,8 @@ class UsuarioController extends Controller
         $activationUrl = route('activation.form', ['token' => $token]);
         Mail::to($usuario->email)->send(new UserInvitationMail($usuario, $activationUrl));
         
+        AuditLoggerService::log('Usuarios', 'CREAR', "Se creó el usuario '{$usuario->name}' ({$usuario->email}) con rol '{$usuario->rol}'.");
+
         return redirect()->route('usuarios.index')
             ->with('ok', 'Usuario creado correctamente. Se ha enviado un correo electrónico de invitación para activar la cuenta.');
     }
@@ -123,6 +127,8 @@ class UsuarioController extends Controller
 
         $usuario->save();
 
+        AuditLoggerService::log('Usuarios', 'ACTUALIZAR', "Se actualizó la información del usuario '{$usuario->name}' ({$usuario->email}). Rol: {$usuario->rol}.");
+
         return redirect()->route('usuarios.index')
             ->with('ok', 'Usuario actualizado correctamente.');
     }
@@ -133,7 +139,11 @@ class UsuarioController extends Controller
     public function destroy(string $id)
     {
         $usuario = User::findOrFail($id);
+        $nombre = $usuario->name;
+        $email = $usuario->email;
         $usuario->delete();
+
+        AuditLoggerService::log('Usuarios', 'ELIMINAR', "Se eliminó permanentemente al usuario '{$nombre}' ({$email}).");
 
         return redirect()->route('usuarios.index');
     }
@@ -160,7 +170,44 @@ class UsuarioController extends Controller
         $activationUrl = route('activation.form', ['token' => $token]);
         Mail::to($usuario->email)->send(new UserInvitationMail($usuario, $activationUrl));
 
+        AuditLoggerService::log('Usuarios', 'REENVIAR_INVITACION', "Se reenvío el correo de invitación al usuario '{$usuario->name}' ({$usuario->email}).");
+
         return redirect()->route('usuarios.index')
             ->with('ok', 'Invitación reenviada correctamente al correo ' . $usuario->email . '.');
+    }
+
+    /**
+     * Alterna el estado del usuario entre activo e inactivo (dar de baja).
+     */
+    public function toggleStatus($id)
+    {
+        $usuario = User::findOrFail($id);
+
+        // Evitar que el administrador se desactive a sí mismo
+        if (auth()->id() == $usuario->id) {
+            return redirect()->route('usuarios.index')
+                ->with('error', 'No puedes dar de baja tu propia cuenta.');
+        }
+
+        if ($usuario->status === 'active') {
+            $usuario->status = 'inactive';
+            $usuario->save();
+
+            AuditLoggerService::log('Usuarios', 'DESACTIVAR', "Se dio de baja (desactivó) al usuario '{$usuario->name}' ({$usuario->email}).");
+
+            return redirect()->route('usuarios.index')
+                ->with('ok', 'El usuario "' . $usuario->name . '" ha sido dado de baja (desactivado) correctamente.');
+        } else {
+            $usuario->status = 'active';
+            // Si estaba pendiente, al activarlo manualmente limpiamos los tokens de invitación
+            $usuario->activation_token = null;
+            $usuario->activation_token_expires_at = null;
+            $usuario->save();
+
+            AuditLoggerService::log('Usuarios', 'ACTIVAR', "Se activó la cuenta del usuario '{$usuario->name}' ({$usuario->email}).");
+
+            return redirect()->route('usuarios.index')
+                ->with('ok', 'El usuario "' . $usuario->name . '" ha sido activado correctamente.');
+        }
     }
 }

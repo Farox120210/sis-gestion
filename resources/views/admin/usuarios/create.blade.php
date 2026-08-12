@@ -70,21 +70,14 @@
                             @enderror
                         </div>
 
-                        {{-- Agrupamos las contraseñas en una sola fila --}}
-                        <div class="form-row mb-2">
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="password" class="text-dark font-weight-bold">Contraseña <span class="text-danger">*</span></label>
-                                <input type="password" id="password" name="password" 
-                                       class="form-control @error('password') is-invalid @enderror" required>
-                                @error('password')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            
-                            <div class="form-group col-md-6 mb-3">
-                                <label for="password_confirmation" class="text-dark font-weight-bold">Repita la contraseña <span class="text-danger">*</span></label>
-                                <input type="password" id="password_confirmation" name="password_confirmation" class="form-control" required>
-                            </div>
+                        {{-- Nota sobre el flujo de invitación --}}
+                        <div class="alert alert-info border-0 shadow-sm p-3 mb-2" style="border-radius: 8px; background-color: #e8f4fd; color: #004085;">
+                            <h6 class="font-weight-bold mb-1">
+                                <i class="fas fa-paper-plane mr-2 text-primary"></i>Flujo de Invitación Activo
+                            </h6>
+                            <p class="small mb-0" style="line-height: 1.5;">
+                                Este usuario se creará en estado <strong>inactivo</strong> y sin contraseña. El sistema generará automáticamente un enlace seguro y de un solo uso para enviarlo al correo ingresado, permitiendo que el usuario establezca su propia contraseña y active su cuenta por primera vez.
+                            </p>
                         </div>
 
                     </div>

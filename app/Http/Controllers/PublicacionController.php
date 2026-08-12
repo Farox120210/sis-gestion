@@ -11,6 +11,8 @@ use Illuminate\Support\Str;
 use App\Exports\PublicacionesExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\AuditLoggerService;
+
 
 class PublicacionController extends Controller
 {
@@ -323,6 +325,8 @@ class PublicacionController extends Controller
             }
 
             DB::commit();
+
+            AuditLoggerService::log('Publicaciones', 'CREAR', "Se creó la publicación '{$request->titulo}' (ID: {$idPublicacion}).");
 
             return redirect()
                 ->route('publicaciones.show', $idPublicacion)
@@ -690,6 +694,8 @@ class PublicacionController extends Controller
 
             DB::commit();
 
+            AuditLoggerService::log('Publicaciones', 'ACTUALIZAR', "Se actualizó la publicación '{$request->titulo}' (ID: {$id}).");
+
             return redirect()
                 ->route('publicaciones.show', $id)
                 ->with('ok', 'Publicación actualizada correctamente.');
@@ -792,6 +798,8 @@ class PublicacionController extends Controller
             }
 
             DB::commit();
+
+            AuditLoggerService::log('Publicaciones', 'ELIMINAR', "Se eliminó permanentemente la publicación (ID: {$id}).");
 
             return redirect()
                 ->route('publicaciones.index')

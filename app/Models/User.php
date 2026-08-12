@@ -26,6 +26,9 @@ class User extends Authenticatable
         'email',
         'password',
         'rol', // Agregamos el campo 'rol' a los fillable
+        'status',
+        'activation_token',
+        'activation_token_expires_at',
     ];
 
     /**
@@ -49,6 +52,16 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Verifica si el usuario está activo.
+     *
+     * @return bool
+     */
+    public function isActive(): bool
+    {
+        return $this->status === 'active';
     }
 }
 

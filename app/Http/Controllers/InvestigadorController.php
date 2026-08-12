@@ -9,8 +9,10 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
 use App\Exports\InvestigadoresExport;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Services\AuditLoggerService;
 
 class InvestigadorController extends Controller
+
 {
     /**
      * Display a listing of the resource.
@@ -140,6 +142,9 @@ public function store(Request $request)
         }
 
         DB::commit();
+
+        AuditLoggerService::log('Investigadores', 'CREAR', "Se registró un nuevo investigador: '{$data['nombres']} {$data['apellidos']}' ({$data['correo']}).");
+
         return redirect()->route('investigadores.index')
             ->with('ok', 'Investigador registrado correctamente.');
     } catch (\Throwable $e) {
@@ -323,6 +328,9 @@ public function show(string $id)
         }
 
         DB::commit();
+
+        AuditLoggerService::log('Investigadores', 'ACTUALIZAR', "Se actualizó la información del investigador ID {$id}.");
+
         return redirect()->route('investigadores.index')
             ->with('ok', 'Investigador actualizado correctamente.');
 
@@ -363,6 +371,8 @@ public function show(string $id)
                 ->delete();
 
             DB::commit();
+
+            AuditLoggerService::log('Investigadores', 'ELIMINAR', "Se eliminó permanentemente al investigador ID {$id}.");
 
             return redirect()->route('investigadores.index')
                 ->with('ok', 'Investigador eliminado correctamente.');

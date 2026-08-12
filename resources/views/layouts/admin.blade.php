@@ -11,6 +11,10 @@ scratch. This page gets rid of all links and provides the needed markup only.
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>Dashboard-ESAT_MASTER</title>
+    <link rel="icon" type="image/png" href="{{ asset('dist/img/LOGO_UNASAM-removebg-preview.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ asset('dist/img/LOGO_UNASAM-removebg-preview.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('dist/img/LOGO_UNASAM-removebg-preview.png') }}">
+
 
     <!-- Google Font: Source Sans Pro -->
     <link rel="stylesheet"
@@ -225,47 +229,62 @@ scratch. This page gets rid of all links and provides the needed markup only.
                         data-accordion="false">
                         <!-- Add icons to the links using the .nav-icon class
                with font-awesome or any other icon font library -->
-                        <li class="nav-item menu-open">
-                            <a href="#" class="nav-link active">
-                                <i class="bi bi-people-fill"></i>
-                                <p>
-                                    Módulos
-                                    <i class="right fas fa-angle-left"></i>
-                                </p>
+                        <!-- Encabezado: Módulos -->
+                        <li class="nav-header text-uppercase text-muted font-weight-bold">Módulos del Sistema</li>
+
+                        <li class="nav-item">
+                            <a href="{{ url('/admin/usuarios') }}"
+                                class="nav-link {{ request()->is('admin/usuarios*') ? 'active' : '' }}">
+                                <i class="fas fa-users nav-icon"></i>
+                                <p>Usuarios</p>
                             </a>
-                            <ul class="nav nav-treeview" style="display: block;">
-
-                                <li class="nav-item">
-                                    {{-- Si la URL contiene 'admin/usuarios', imprime 'active', sino no imprime nada --}}
-                                    <a href="{{ url('/admin/usuarios') }}"
-                                        class="nav-link {{ request()->is('admin/usuarios*') ? 'active' : '' }}">
-                                        <i class="fas fa-users nav-icon"></i>
-                                        <p>Usuarios</p>
-                                    </a>
-                                </li>
-
-                                <li class="nav-item">
-                                    <a href="{{ url('/admin/publicaciones') }}"
-                                        class="nav-link {{ request()->is('admin/publicaciones*') ? 'active' : '' }}">
-                                        <i class="fas fa-book-open nav-icon"></i>
-                                        <p>Publicaciones</p>
-                                    </a>
-                                </li>
-
-                                <li class="nav-item">
-                                    <a href="{{ url('/admin/investigadores') }}"
-                                        class="nav-link {{ request()->is('admin/investigadores*') ? 'active' : '' }}">
-                                        <i class="fas fa-id-badge nav-icon"></i>
-                                        <p>Lista de investigadores</p>
-                                    </a>
-                                </li>
-
-                            </ul>
-
-
-
-
                         </li>
+
+                        <li class="nav-item">
+                            <a href="{{ url('/admin/publicaciones') }}"
+                                class="nav-link {{ request()->is('admin/publicaciones*') ? 'active' : '' }}">
+                                <i class="fas fa-book-open nav-icon"></i>
+                                <p>Publicaciones</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="{{ url('/admin/investigadores') }}"
+                                class="nav-link {{ request()->is('admin/investigadores*') ? 'active' : '' }}">
+                                <i class="fas fa-id-badge nav-icon"></i>
+                                <p>Lista de investigadores</p>
+                            </a>
+                        </li>
+
+                        @if (Auth::user()?->rol === 'super_admin')
+                            <!-- Encabezado: Auditoría y Sistema -->
+                            <li class="nav-header text-uppercase text-muted font-weight-bold mt-2">Auditoría y Sistema</li>
+
+                            <li class="nav-item">
+                                <a href="{{ route('admin.auditoria.index') }}"
+                                    class="nav-link {{ request()->routeIs('admin.auditoria.index') ? 'active' : '' }}">
+                                    <i class="fas fa-history nav-icon text-info"></i>
+                                    <p>Bitácora de Acciones</p>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a href="{{ route('admin.auditoria.errores') }}"
+                                    class="nav-link {{ request()->routeIs('admin.auditoria.errores') ? 'active' : '' }}">
+                                    <i class="fas fa-exclamation-triangle nav-icon text-danger"></i>
+                                    <p>Log de Errores</p>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a href="{{ route('admin.auditoria.sistema') }}"
+                                    class="nav-link {{ request()->routeIs('admin.auditoria.sistema') ? 'active' : '' }}">
+                                    <i class="fas fa-server nav-icon text-warning"></i>
+                                    <p>Estado y Respaldos</p>
+                                </a>
+                            </li>
+                        @endif
+
 
                         @guest
                             @if (Route::has('login'))
